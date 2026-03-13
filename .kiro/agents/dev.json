@@ -1,0 +1,60 @@
+{
+  "name": "dev",
+  "description": "Agent for drop-coop - Browser-based delivery tycoon with API hacking challenges",
+  "prompt": "file://../prompts/dev.md",
+  "resources": [
+    "file://README.md",
+    "file://.kiro/specs/**/*.md",
+    "file://.kiro/steering/**/*.md"
+  ],
+  "tools": [
+    "read",
+    "write",
+    "shell",
+    "grep",
+    "glob",
+    "web_search",
+    "web_fetch",
+    "introspect",
+    "thinking",
+    "code"
+  ],
+  "allowedTools": [
+    "read",
+    "shell",
+    "grep",
+    "glob",
+    "web_search",
+    "web_fetch",
+    "introspect",
+    "thinking",
+    "code"
+  ],
+  "toolsSettings": {
+    "write": {
+      "allowedPaths": [
+        ".kiro/**",
+        "server/**",
+        "client/**",
+        "challenges/**",
+        "solutions/**",
+        ".github/**",
+        "README.md",
+        "CHANGELOG.md",
+        "package.json",
+        "package-lock.json",
+        "docker-compose.yml",
+        "Dockerfile",
+        "vitest.config.ts",
+        "tsconfig.json",
+        "biome.json",
+        ".editorconfig",
+        ".gitignore"
+      ]
+    },
+    "shell": {
+      "autoAllowReadonly": true,
+      "deniedCommands": [".*git commit.*", ".*git push.*", ".*git tag .*", ".*npm publish.*"]
+    }
+  }
+}
