@@ -113,7 +113,15 @@ npm test             # Run tests
 ## Roadmap
 
 - [x] Concept and game design
+- [x] Tech stack decisions (Hono, SvelteKit, Neon, Drizzle, Vercel)
+- [x] Monorepo scaffold
 - [ ] **Phase 0**: MVP — core game loop + stage 1
+  - [ ] Database schema (players, riders, orders, zones)
+  - [ ] Auth (register/login, JWT)
+  - [ ] Game engine (lazy tick)
+  - [ ] API routes (riders, orders, assign, deliver)
+  - [ ] Frontend (dashboard, riders, orders)
+  - [ ] Deploy to Vercel
 - [ ] **Phase 1**: Economy, events, stages 2-3
 - [ ] **Phase 2**: Cities, co-op mechanics, stages 4-5
 - [ ] **Phase 3**: WebSocket, protobuf, stages 6-8
@@ -125,7 +133,7 @@ This is an open source project. Contributions welcome — especially:
 - New hacking stages
 - New cities and events
 - Game balance feedback
-- Bot solutions (in `solutions/`)
+- Bot solutions
 
 ## License
 

@@ -2,11 +2,7 @@
   "name": "dev",
   "description": "Agent for drop-coop - Browser-based delivery tycoon with API hacking challenges",
   "prompt": "file://../prompts/dev.md",
-  "resources": [
-    "file://README.md",
-    "file://.kiro/specs/**/*.md",
-    "file://.kiro/steering/**/*.md"
-  ],
+  "resources": ["file://README.md", "file://.kiro/specs/**/*.md", "file://.kiro/steering/**/*.md"],
   "tools": [
     "read",
     "write",
