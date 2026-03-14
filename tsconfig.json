@@ -6,6 +6,6 @@
     "isolatedDeclarations": true,
     "allowImportingTsExtensions": true
   },
-  "include": ["packages/*/src", "packages/*/test"],
+  "include": ["packages/game/src", "packages/game/test", "packages/api/src", "packages/api/test"],
   "exclude": ["**/dist", "**/node_modules"]
 }
