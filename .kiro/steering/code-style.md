@@ -10,8 +10,10 @@
 
 ### Module System
 - ES modules only (`"type": "module"` in package.json)
-- Use `.js` extensions in imports
-- Example: `import { foo } from './bar.js'` (not `./bar` or `./bar.ts`)
+- Use `.ts` extensions in imports for packages that run directly (api, web)
+- Use `.js` extensions in imports for compiled packages (game — built with tsdown)
+- Example (api): `import { foo } from './bar.ts'`
+- Example (game): `import { foo } from './bar.js'`
 
 ### Naming Conventions
 - **camelCase** for variables, functions, methods
@@ -23,7 +25,7 @@
 ```typescript
 // 1. Imports (external first, then internal)
 import { Hono } from 'hono';
-import type { GameState } from './types.js';
+import type { GameState } from './types.ts';
 
 // 2. Types/Interfaces
 export interface RiderConfig {
