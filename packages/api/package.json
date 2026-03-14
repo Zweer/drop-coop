@@ -24,6 +24,9 @@
     "email": "n.olivieriachille@gmail.com"
   },
   "type": "module",
+  "exports": {
+    "./app": "./src/app.ts"
+  },
   "scripts": {
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",

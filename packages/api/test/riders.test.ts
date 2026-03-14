@@ -58,7 +58,7 @@ describe('GET /api/riders/pool', () => {
     const res = await get('/api/riders/pool');
 
     expect(res.status).toBe(200);
-    const pool = await res.json();
+    const pool: any = await res.json();
     expect(pool).toHaveLength(3);
     expect(pool[0]).toHaveProperty('name');
     expect(pool[0]).toHaveProperty('speed');
@@ -79,7 +79,7 @@ describe('POST /api/riders/hire', () => {
     const res = await post('/api/riders/hire', hireBody);
 
     expect(res.status).toBe(201);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.name).toBe('Marco');
   });
 
@@ -89,7 +89,7 @@ describe('POST /api/riders/hire', () => {
     const res = await post('/api/riders/hire', hireBody);
 
     expect(res.status).toBe(400);
-    expect((await res.json()).error).toMatch(/money/i);
+    expect(((await res.json()) as any).error).toMatch(/money/i);
   });
 
   it('should reject invalid stats', async () => {

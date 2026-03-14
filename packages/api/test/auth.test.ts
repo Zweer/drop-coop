@@ -25,7 +25,7 @@ describe('POST /api/auth/register', () => {
     const res = await post('/api/auth/register', { username: 'testuser', password: 'secret123' });
 
     expect(res.status).toBe(201);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.token).toBeDefined();
     expect(body.player.username).toBe('testuser');
   });
@@ -66,7 +66,7 @@ describe('POST /api/auth/login', () => {
     const res = await post('/api/auth/login', { username: 'testuser', password: 'secret123' });
 
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.token).toBeDefined();
     expect(body.player.id).toBe('p1');
   });

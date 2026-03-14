@@ -1,11 +1,18 @@
 import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
 
 import * as schema from '../models/index.ts';
 
-if (existsSync('.env.local')) process.loadEnvFile('.env.local');
+// Try repo root, then CWD
+for (const p of [resolve(import.meta.dirname, '../../../../.env.local'), '.env.local']) {
+  if (existsSync(p)) {
+    process.loadEnvFile(p);
+    break;
+  }
+}
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) throw new Error('DATABASE_URL is required');
