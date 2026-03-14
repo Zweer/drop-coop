@@ -1,0 +1,89 @@
+{
+  "name": "drop-coop",
+  "version": "0.0.0",
+  "private": true,
+  "description": "🚲 A browser-based delivery tycoon with a hidden API hacking layer",
+  "keywords": [
+    "game",
+    "tycoon",
+    "hacking",
+    "api",
+    "delivery",
+    "cooperative"
+  ],
+  "homepage": "https://github.com/Zweer/drop-coop#readme",
+  "bugs": {
+    "url": "https://github.com/Zweer/drop-coop/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Zweer/drop-coop.git"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Zweer",
+    "email": "n.olivieriachille@gmail.com"
+  },
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w packages/game",
+    "clean": "rimraf packages/game/dist",
+    "dev": "concurrently npm:dev:* --prefixColors auto",
+    "dev:api": "npm run dev -w packages/api",
+    "dev:web": "npm run dev -w packages/web",
+    "prelint": "npm run build",
+    "lint": "concurrently npm:lint:* --prefixColors auto",
+    "postlint": "npm run clean",
+    "lint:engines": "ls-engines",
+    "lint:format": "biome check --write",
+    "lint:lockfile": "lockfile-lint",
+    "lint:package": "npmPkgJsonLint .",
+    "lint:sort_package": "sort-package-json \"package.json\" \"packages/*/package.json\"",
+    "lint:typecheck": "tsc --noEmit",
+    "prepare": "husky",
+    "pretest": "npm run build",
+    "test": "vitest run",
+    "posttest": "npm run clean",
+    "pretest:coverage": "npm run build",
+    "test:coverage": "vitest run --coverage",
+    "posttest:coverage": "npm run clean"
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.6",
+    "@commitlint/cli": "^20.4.4",
+    "@commitlint/config-conventional": "^20.4.4",
+    "@tsconfig/node22": "^22.0.5",
+    "@types/node": "^25.5.0",
+    "@vitest/coverage-v8": "^4.1.0",
+    "concurrently": "^9.2.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.3.3",
+    "lockfile-lint": "^5.0.0",
+    "ls-engines": "^0.10.0",
+    "npm-package-json-lint": "^9.1.0",
+    "npm-package-json-lint-config-default": "^8.0.1",
+    "rimraf": "^6.1.3",
+    "sort-package-json": "^3.6.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  },
+  "engines": {
+    "node": ">= 22"
+  },
+  "lockfile-lint": {
+    "path": "package-lock.json",
+    "type": "npm",
+    "validate-https": true,
+    "allowed-hosts": [
+      "npm"
+    ]
+  }
+}

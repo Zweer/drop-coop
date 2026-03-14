@@ -1,0 +1,2 @@
+lint-staged --concurrent false
+git update-index --again
