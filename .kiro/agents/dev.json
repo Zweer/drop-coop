@@ -30,22 +30,19 @@
     "write": {
       "allowedPaths": [
         ".kiro/**",
-        "server/**",
-        "client/**",
-        "challenges/**",
-        "solutions/**",
         ".github/**",
-        "README.md",
+        "packages/**",
+        ".editorconfig",
+        ".gitignore",
+        "biome.json",
         "CHANGELOG.md",
-        "package.json",
-        "package-lock.json",
         "docker-compose.yml",
         "Dockerfile",
-        "vitest.config.ts",
+        "package-lock.json",
+        "package.json",
+        "README.md",
         "tsconfig.json",
-        "biome.json",
-        ".editorconfig",
-        ".gitignore"
+        "vitest.config.ts"
       ]
     },
     "shell": {

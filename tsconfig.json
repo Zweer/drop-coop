@@ -9,7 +9,7 @@
     "moduleResolution": "node16",
     "declaration": true,
     "noEmit": true,
-    "isolatedDeclarations": true,
+    "isolatedDeclarations": false,
     "allowImportingTsExtensions": true
   },
   "include": ["packages/game/src", "packages/game/test", "packages/api/src", "packages/api/test"],

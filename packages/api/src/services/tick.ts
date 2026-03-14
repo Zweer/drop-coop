@@ -1,0 +1,109 @@
+import type { Order, Player, Rider } from '@drop-coop/game';
+import { processTick } from '@drop-coop/game';
+import { and, eq, inArray } from 'drizzle-orm';
+
+import { db } from '../db/index.ts';
+import { orders, players, riders } from '../models/index.ts';
+
+/** Run lazy tick for a player: compute elapsed game state and persist to DB. */
+export async function runTick(playerId: string): Promise<{
+  player: Player;
+  riders: Rider[];
+  orders: Order[];
+  revenue: number;
+  costs: number;
+}> {
+  const now = new Date();
+
+  const player = await db.query.players.findFirst({
+    where: eq(players.id, playerId),
+  });
+  if (!player) throw new Error('Player not found');
+
+  const playerRiders = await db.query.riders.findMany({
+    where: eq(riders.playerId, playerId),
+  });
+
+  const activeOrders = await db.query.orders.findMany({
+    where: and(eq(orders.playerId, playerId), inArray(orders.status, ['available', 'assigned'])),
+  });
+
+  const toGamePlayer = (p: typeof player): Player => ({
+    id: p.id,
+    money: p.money,
+    reputation: p.reputation,
+    level: p.level,
+    totalDeliveries: p.totalDeliveries,
+    totalProfit: p.totalProfit,
+    lastTickAt: p.lastTickAt,
+  });
+
+  const toGameRider = (r: (typeof playerRiders)[0]): Rider => ({
+    id: r.id,
+    playerId: r.playerId,
+    name: r.name,
+    speed: r.speed,
+    reliability: r.reliability,
+    cityKnowledge: r.cityKnowledge,
+    stamina: r.stamina,
+    energy: r.energy,
+    morale: r.morale,
+    status: r.status,
+    salary: r.salary,
+  });
+
+  const toGameOrder = (o: (typeof activeOrders)[0]): Order => ({
+    id: o.id,
+    playerId: o.playerId,
+    riderId: o.riderId,
+    distance: o.distance,
+    urgency: o.urgency,
+    status: o.status,
+    reward: o.reward,
+    expiresAt: o.expiresAt,
+    assignedAt: o.assignedAt,
+    deliveredAt: o.deliveredAt,
+  });
+
+  const result = processTick(
+    toGamePlayer(player),
+    playerRiders.map(toGameRider),
+    activeOrders.map(toGameOrder),
+    now,
+  );
+
+  // Persist player
+  await db
+    .update(players)
+    .set({
+      money: result.player.money,
+      totalDeliveries: result.player.totalDeliveries,
+      totalProfit: result.player.totalProfit,
+      lastTickAt: now,
+    })
+    .where(eq(players.id, playerId));
+
+  // Persist changed riders
+  for (const rider of result.riders) {
+    const original = playerRiders.find((r) => r.id === rider.id);
+    if (original && (original.energy !== rider.energy || original.status !== rider.status)) {
+      await db
+        .update(riders)
+        .set({ energy: rider.energy, status: rider.status })
+        .where(eq(riders.id, rider.id));
+    }
+  }
+
+  // Persist changed orders
+  for (const order of result.orders) {
+    const original = activeOrders.find((o) => o.id === order.id);
+    if (original && original.status !== order.status) {
+      await db
+        .update(orders)
+        .set({ status: order.status, deliveredAt: order.deliveredAt })
+        .where(eq(orders.id, order.id));
+    }
+  }
+
+  return result;
+}

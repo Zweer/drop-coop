@@ -1,0 +1,65 @@
+<script lang="ts">
+  import { goto } from '$app/navigation'
+  import { api, setToken } from '$lib/api'
+  import { Button } from '$lib/components/ui/button'
+  import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card'
+  import { Input } from '$lib/components/ui/input'
+  import { Label } from '$lib/components/ui/label'
+
+  let isLogin = $state(true)
+  let username = $state('')
+  let password = $state('')
+  let error = $state('')
+  let loading = $state(false)
+
+  async function handleSubmit() {
+    error = ''
+    loading = true
+    try {
+      const fn = isLogin ? api.auth.login : api.auth.register
+      const { token } = await fn(username, password)
+      setToken(token)
+      goto('/dashboard')
+    } catch (e) {
+      error = e instanceof Error ? e.message : 'Something went wrong'
+    } finally {
+      loading = false
+    }
+  }
+</script>
+
+<div class="flex min-h-screen items-center justify-center">
+  <Card class="w-full max-w-sm">
+    <CardHeader>
+      <CardTitle class="text-2xl">🚲 {isLogin ? 'Login' : 'Register'}</CardTitle>
+      <CardDescription>
+        {isLogin ? 'Sign in to your co-op' : 'Start your delivery co-op'}
+      </CardDescription>
+    </CardHeader>
+    <CardContent>
+      <form onsubmit={handleSubmit} class="space-y-4">
+        <div class="space-y-2">
+          <Label for="username">Username</Label>
+          <Input id="username" bind:value={username} required minlength={3} maxlength={20} />
+        </div>
+        <div class="space-y-2">
+          <Label for="password">Password</Label>
+          <Input id="password" type="password" bind:value={password} required minlength={6} />
+        </div>
+        {#if error}
+          <p class="text-sm text-destructive">{error}</p>
+        {/if}
+        <Button type="submit" class="w-full" disabled={loading}>
+          {loading ? '...' : isLogin ? 'Login' : 'Register'}
+        </Button>
+        <button
+          type="button"
+          class="w-full text-sm text-muted-foreground hover:underline"
+          onclick={() => { isLogin = !isLogin; error = '' }}
+        >
+          {isLogin ? "Don't have an account? Register" : 'Already have an account? Login'}
+        </button>
+      </form>
+    </CardContent>
+  </Card>
+</div>

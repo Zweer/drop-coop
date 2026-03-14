@@ -31,7 +31,7 @@
   "scripts": {
     "build": "npm run build -w packages/game",
     "clean": "rimraf packages/game/dist",
-    "dev": "concurrently -n api,web -c blue,green npm:dev:*",
+    "dev": "concurrently -n api,web -c blue,green 'npm run dev -w packages/api' 'npm run dev -w packages/web'",
     "dev:api": "npm run dev -w packages/api",
     "dev:web": "npm run dev -w packages/web",
     "lint": "concurrently npm:lint:* --prefixColors auto",
