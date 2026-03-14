@@ -1,0 +1,40 @@
+import { SignJWT } from 'jose';
+import { vi } from 'vitest';
+
+const JWT_SECRET = new TextEncoder().encode('dev-secret');
+
+export async function createTestToken(playerId: string): Promise<string> {
+  return new SignJWT({ sub: playerId })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setExpirationTime('1h')
+    .setIssuedAt()
+    .sign(JWT_SECRET);
+}
+
+export function mockInsertReturning(result: unknown[]) {
+  return {
+    values: vi.fn().mockReturnValue({
+      returning: vi.fn().mockResolvedValue(result),
+    }),
+  };
+}
+
+export function mockUpdateWhere() {
+  return {
+    set: vi.fn().mockReturnValue({
+      where: vi.fn().mockResolvedValue(undefined),
+    }),
+  };
+}
+
+export function createMockDb() {
+  return {
+    query: {
+      players: { findFirst: vi.fn(), findMany: vi.fn() },
+      riders: { findFirst: vi.fn(), findMany: vi.fn() },
+      orders: { findFirst: vi.fn(), findMany: vi.fn() },
+    },
+    insert: vi.fn(),
+    update: vi.fn(),
+  };
+}

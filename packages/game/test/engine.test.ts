@@ -188,4 +188,86 @@ describe('processTick', () => {
     expect(player.money).toBe(originalMoney);
     expect(riders[0].energy).toBe(originalEnergy);
   });
+
+  it('should complete multiple deliveries in one tick', () => {
+    const player = makePlayer();
+    const riders = [
+      makeRider({ id: 'r1', status: 'delivering' }),
+      makeRider({ id: 'r2', status: 'delivering' }),
+    ];
+    const orders = [
+      makeOrder({
+        id: 'o1',
+        riderId: 'r1',
+        status: 'assigned',
+        assignedAt: new Date('2026-01-01T12:00:00Z'),
+      }),
+      makeOrder({
+        id: 'o2',
+        riderId: 'r2',
+        status: 'assigned',
+        assignedAt: new Date('2026-01-01T12:00:00Z'),
+        distance: 3,
+        reward: 7.5,
+      }),
+    ];
+    const now = new Date('2026-01-01T13:00:00Z');
+
+    const result = processTick(player, riders, orders, now);
+
+    expect(result.orders.filter((o) => o.status === 'delivered')).toHaveLength(2);
+    expect(result.riders.filter((r) => r.status === 'idle')).toHaveLength(2);
+    expect(result.player.totalDeliveries).toBe(2);
+    expect(result.revenue).toBeGreaterThan(0);
+  });
+
+  it('should allow money to go negative from salary costs', () => {
+    const player = makePlayer({ money: 5 });
+    const riders = [makeRider({ salary: 100 })];
+    const now = new Date('2026-01-01T13:00:00Z'); // 1 hour
+
+    const result = processTick(player, riders, [], now);
+
+    expect(result.player.money).toBe(-95); // 5 - 100
+    expect(result.costs).toBe(100);
+  });
+
+  it('should calculate net profit from revenue minus costs', () => {
+    const player = makePlayer({ money: 500 });
+    const riders = [makeRider({ id: 'r1', salary: 10, status: 'delivering' })];
+    const orders = [
+      makeOrder({
+        riderId: 'r1',
+        status: 'assigned',
+        assignedAt: new Date('2026-01-01T12:00:00Z'),
+        reward: 10.5,
+      }),
+    ];
+    const now = new Date('2026-01-01T13:00:00Z');
+
+    const result = processTick(player, riders, orders, now);
+
+    expect(result.revenue).toBe(10.5);
+    expect(result.costs).toBe(10);
+    expect(result.player.money).toBe(500.5); // 500 + 10.5 - 10
+    expect(result.player.totalProfit).toBe(0.5);
+  });
+
+  it('should track totalProfit cumulatively', () => {
+    const player = makePlayer({ totalProfit: 100 });
+    const riders = [makeRider({ id: 'r1', status: 'delivering', salary: 5 })];
+    const orders = [
+      makeOrder({
+        riderId: 'r1',
+        status: 'assigned',
+        assignedAt: new Date('2026-01-01T12:00:00Z'),
+        reward: 10.5,
+      }),
+    ];
+    const now = new Date('2026-01-01T13:00:00Z');
+
+    const result = processTick(player, riders, orders, now);
+
+    expect(result.player.totalProfit).toBe(105.5); // 100 + 10.5 - 5
+  });
 });
