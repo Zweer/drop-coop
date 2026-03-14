@@ -177,7 +177,7 @@ Each stage adds a real security layer. Stages are selectable via config (default
 | Test | Vitest | Fast, compatible with Vite |
 | Lint | Biome | Fast, replaces ESLint+Prettier |
 | Deploy | Vercel | Auto-deploy from GitHub, serverless |
-| Auth | jose (JWT) | Standard, lightweight |
+| Auth | jose (JWT) + arctic (OAuth) | jose for tokens, arctic for OAuth flows (GitHub/Google) |
 | Validation | Zod | Runtime type safety |
 
 ## Implementation Phases
@@ -195,6 +195,7 @@ Each stage adds a real security layer. Stages are selectable via config (default
 - [ ] Economy: costs, revenue, dynamic pricing
 - [ ] Events: random events affecting gameplay
 - [ ] Zones: multiple delivery zones
+- [ ] OAuth login with arctic (GitHub, Google)
 - [ ] Stage 2: JWT authentication
 - [ ] Stage 3: HMAC signing
 - [ ] Leaderboard (basic)

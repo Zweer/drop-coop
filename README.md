@@ -122,7 +122,7 @@ npm test             # Run tests
   - [ ] API routes (riders, orders, assign, deliver)
   - [ ] Frontend (dashboard, riders, orders)
   - [ ] Deploy to Vercel
-- [ ] **Phase 1**: Economy, events, stages 2-3
+- [ ] **Phase 1**: Economy, events, OAuth (arctic), stages 2-3
 - [ ] **Phase 2**: Cities, co-op mechanics, stages 4-5
 - [ ] **Phase 3**: WebSocket, protobuf, stages 6-8
 - [ ] **Phase 4**: Community features, mobile PWA
