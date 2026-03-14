@@ -66,7 +66,7 @@ export class GameEngine {
 
 ### Key Dependencies (planned)
 - `hono` — HTTP framework (lightweight, fast)
-- `better-sqlite3` — SQLite driver
+- `drizzle-orm` + `@neondatabase/serverless` — ORM + Postgres driver
 - `jose` — JWT handling
 - `zod` — Input validation
 

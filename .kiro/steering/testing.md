@@ -24,7 +24,7 @@ describe('Economy', () => {
 ```
 
 ### Integration Tests — API Endpoints
-- Test API routes with a real SQLite in-memory database
+- Test API routes with a real PostgreSQL test database
 - Verify request/response format
 - Test authentication and authorization
 
@@ -56,7 +56,7 @@ describe('POST /api/orders/assign', () => {
 - Random number generation (seed for deterministic tests)
 
 ### When NOT to Mock
-- SQLite (use in-memory database instead)
+- Database (use a test database or mock the Drizzle layer)
 - Game logic (test the real implementation)
 - API routes (test with real Hono app instance)
 

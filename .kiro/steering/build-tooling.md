@@ -5,90 +5,103 @@
 | Tool | Purpose |
 |------|---------|
 | **Hono** | HTTP framework (backend API) |
-| **better-sqlite3** | SQLite database |
+| **Node.js 22** | Runtime (LTS) |
+| **PostgreSQL (Neon)** | Serverless database (scale-to-zero) |
+| **Drizzle ORM** | Type-safe ORM, SQL-first |
+| **SvelteKit** | Frontend framework + routing |
+| **Svelte 5** | UI framework (runes, compiler-driven) |
+| **shadcn-svelte** | UI component library (Tailwind CSS) |
 | **Vite** | Frontend build + dev server |
-| **Vue 3** or **React** | Frontend UI (TBD) |
 | **Vitest** | Tests |
 | **Biome** | Lint + format |
-| **Docker Compose** | One-command deployment |
-| **tsdown** or **tsx** | Backend build/run |
+| **tsdown** | Shared package build |
+| **Vercel** | Hosting (serverless, auto-deploy) |
 
 ## Project Structure
 
 ```
 drop-coop/
-├── server/                  # Backend
-│   ├── src/
-│   │   ├── index.ts         # Entry point (Hono app)
-│   │   ├── api/             # Route handlers
-│   │   │   ├── auth.ts      # Login, register
-│   │   │   ├── orders.ts    # Order management
-│   │   │   ├── riders.ts    # Rider management
-│   │   │   ├── market.ts    # Buy/sell equipment
-│   │   │   └── leaderboard.ts
-│   │   ├── game/            # Game logic (pure functions)
-│   │   │   ├── engine.ts    # Core game loop
-│   │   │   ├── economy.ts   # Pricing, costs, revenue
-│   │   │   ├── riders.ts    # Rider stats, assignment
-│   │   │   ├── orders.ts    # Order generation
-│   │   │   ├── events.ts    # Random events
-│   │   │   └── coop.ts      # Cooperative mechanics
-│   │   ├── stages/          # Hacking stage middleware
-│   │   │   ├── stage1.ts    # Plain REST
-│   │   │   ├── stage2.ts    # JWT + hidden endpoints
-│   │   │   ├── stage3.ts    # HMAC signing
-│   │   │   ├── stage4.ts    # Obfuscated endpoints
-│   │   │   ├── stage5.ts    # Rate limiting + batch
-│   │   │   ├── stage6.ts    # WebSocket protocol
-│   │   │   ├── stage7.ts    # Protobuf
-│   │   │   └── stage8.ts    # The Gauntlet
-│   │   ├── db/
-│   │   │   ├── schema.ts    # Table definitions
-│   │   │   ├── migrations.ts
-│   │   │   └── queries.ts   # Prepared statements
-│   │   └── types.ts
-│   ├── test/
-│   ├── package.json
-│   └── tsconfig.json
+├── packages/
+│   ├── api/                     # Backend (Hono API → Vercel serverless)
+│   │   ├── src/
+│   │   │   ├── index.ts         # Entry point (Hono app)
+│   │   │   ├── routes/          # Route handlers
+│   │   │   │   ├── auth.ts      # Login, register
+│   │   │   │   ├── orders.ts    # Order management
+│   │   │   │   ├── riders.ts    # Rider management
+│   │   │   │   ├── market.ts    # Buy/sell equipment
+│   │   │   │   └── leaderboard.ts
+│   │   │   ├── middleware/       # Auth, stages, validation
+│   │   │   └── db/
+│   │   │       ├── schema.ts    # Drizzle table definitions
+│   │   │       ├── migrate.ts   # Migration runner
+│   │   │       └── index.ts     # DB connection (Neon)
+│   │   ├── drizzle/             # Generated migrations
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   │
+│   ├── web/                     # Frontend (SvelteKit → Vercel)
+│   │   ├── src/
+│   │   │   ├── routes/          # SvelteKit pages
+│   │   │   ├── lib/
+│   │   │   │   ├── components/  # UI components
+│   │   │   │   └── api.ts       # API client
+│   │   │   └── app.html
+│   │   ├── package.json
+│   │   ├── svelte.config.js
+│   │   └── vite.config.ts
+│   │
+│   └── game/                    # Game logic (pure functions, shared)
+│       ├── src/
+│       │   ├── engine.ts        # Core game loop (lazy tick)
+│       │   ├── economy.ts       # Pricing, costs, revenue
+│       │   ├── riders.ts        # Rider stats, assignment
+│       │   ├── orders.ts        # Order generation
+│       │   ├── events.ts        # Random events
+│       │   └── types.ts         # Shared types
+│       ├── package.json
+│       └── tsconfig.json
 │
-├── client/                  # Frontend
-│   ├── src/
-│   │   ├── App.vue          # (or App.tsx)
-│   │   ├── views/           # Pages
-│   │   ├── components/      # UI components
-│   │   └── api/             # API client
-│   ├── package.json
-│   └── vite.config.ts
-│
-├── challenges/              # Challenge docs (per stage)
+├── challenges/                  # Challenge docs (per stage)
 │   ├── stage1.md
 │   └── ...
 │
-├── solutions/               # Official bot solutions
+├── solutions/                   # Official bot solutions
 │   ├── stage1/
 │   │   └── bot.ts
 │   └── ...
 │
-├── docker-compose.yml
-├── Dockerfile
-├── package.json             # Root (workspaces)
+├── package.json                 # Root (workspaces)
 ├── biome.json
-├── vitest.config.ts
-└── tsconfig.json
+├── tsconfig.json
+└── vitest.config.ts
 ```
+
+## Monorepo
+
+### Workspaces
+- npm workspaces with `packages/*`
+- Consistent with other projects (FlowRAG, bonvoy)
+- `@drop-coop/api`, `@drop-coop/web`, `@drop-coop/game` package names
+
+### Shared Package (`@drop-coop/game`)
+- Pure game logic functions (no DB, no HTTP)
+- Used by `api` for game state computation
+- Used by `web` for types and constants
+- Built with tsdown
 
 ## Development Workflow
 
 ### Initial Setup
 ```bash
 npm install
-npm run dev                  # Starts both server + client
+npm run dev                  # Starts both API + web
 ```
 
 ### Development
 ```bash
-npm run dev:server           # Backend only (with hot reload)
-npm run dev:client           # Frontend only (Vite dev server)
+npm run dev -w packages/api  # API only (Hono dev server)
+npm run dev -w packages/web  # Frontend only (Vite dev server)
 npm run dev                  # Both (concurrently)
 ```
 
@@ -98,34 +111,36 @@ npm test                     # Run all tests
 npm run test:coverage        # With coverage
 ```
 
-### Docker
+### Database
 ```bash
-docker compose up            # Run everything
-docker compose up --build    # Rebuild and run
+npm run db:generate -w packages/api  # Generate migration from schema changes
+npm run db:migrate -w packages/api   # Run migrations
+npm run db:studio -w packages/api    # Open Drizzle Studio
 ```
+
+### Deploy
+Push to GitHub → Vercel auto-deploys both API and web.
 
 ## Database
 
-### SQLite
-- Zero configuration, file-based
-- `drop-coop.db` in project root (gitignored)
-- Migrations run on startup
-- WAL mode for concurrent reads
+### PostgreSQL on Neon
+- Serverless: scales to zero when idle
+- Free tier: 0.5 GB storage, 100 compute-hours/month
+- Connection via `@neondatabase/serverless` driver (HTTP)
+- Drizzle ORM for type-safe queries and migrations
 
-### Why SQLite
-- No external database to install
-- Self-contained (one file)
-- Fast enough for a game (thousands of players)
-- Easy to reset (delete the file)
+### Lazy Tick
+- No background processes (serverless-compatible)
+- Game state computed on-demand when player makes a request
+- Server calculates "what happened since last request" and updates state
+- Perfect for idle/tycoon games on serverless
 
 ## Environment Variables
 
-### Development
-- No env vars needed for local development
-- SQLite file created automatically
+### Development (`.env.local`)
+- `DATABASE_URL` — Neon connection string
 
-### Production (Docker)
-- `PORT` — Server port (default: 3000)
-- `DATABASE_PATH` — SQLite file path (default: `./drop-coop.db`)
+### Production (Vercel)
+- `DATABASE_URL` — Neon connection string (set in Vercel dashboard)
+- `JWT_SECRET` — JWT signing key
 - `STAGE` — Active hacking stage (default: 1)
-- `JWT_SECRET` — JWT signing key (auto-generated if not set)

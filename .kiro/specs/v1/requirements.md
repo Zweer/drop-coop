@@ -12,7 +12,7 @@
 | **Tagline** | "Your delivery co-op, your rules." |
 | **GitHub** | `Zweer/drop-coop` |
 | **Genre** | Tycoon / Idle / Hacking sandbox |
-| **Platform** | Browser (self-hosted via Docker) |
+| **Platform** | Browser (hosted on Vercel) |
 | **License** | MIT |
 
 ## Overview
@@ -52,7 +52,7 @@ We considered several approaches:
 1. **API-first**: Every frontend action goes through a real API endpoint
 2. **Progressive disclosure**: The game hints at automation as complexity grows
 3. **Two audiences**: Fun for clickers AND for hackers
-4. **Self-hosted**: Docker Compose, zero external dependencies
+4. **Serverless**: Hosted on Vercel, zero infrastructure to manage
 5. **Open source**: MIT, community-driven
 6. **Minimal scope**: Ship fast, iterate based on feedback
 
@@ -157,34 +157,37 @@ Each stage adds a real security layer. Stages are selectable via config (default
 
 ## Non-Functional Requirements
 
-- **Self-hosted**: `docker compose up` and play
-- **Zero external deps**: SQLite, no Redis/Postgres/etc.
-- **Fast**: Game tick < 100ms, API response < 50ms
-- **Offline-capable**: Works without internet (local Docker)
+- **Serverless**: Hosted on Vercel, zero infrastructure to manage
+- **Fast**: API response < 50ms, lazy game tick on request
 - **Responsive**: Playable on mobile (but optimized for desktop)
+- **Free tier**: Runs entirely on free tiers (Vercel + Neon) at launch
+- **Lazy tick**: Game state computed on-demand (no background processes), perfect for serverless
 
 ## Tech Stack
 
 | Component | Technology | Why |
 |-----------|-----------|-----|
-| Backend | Hono (TypeScript) | Lightweight, fast, great DX |
-| Database | SQLite (better-sqlite3) | Zero config, self-contained |
-| Frontend | Vue 3 or React (TBD) | Simple, the focus is the backend |
-| Build | Vite | Fast, standard |
+| Backend | Hono (TypeScript) | Lightweight, fast, multi-runtime, zero-config on Vercel |
+| Runtime | Node.js 22 (LTS) | Stable, battle-tested, full ecosystem compatibility |
+| Database | PostgreSQL (Neon) | Serverless, scale-to-zero, free tier |
+| ORM | Drizzle | Type-safe, SQL-first, native Neon support |
+| Frontend | Svelte 5 + SvelteKit | Minimal boilerplate, compiler-driven, great DX |
+| UI Components | shadcn-svelte | Accessible, copy-paste components, Tailwind CSS |
+| Build | Vite (frontend), tsdown (shared packages) | Fast, standard |
 | Test | Vitest | Fast, compatible with Vite |
 | Lint | Biome | Fast, replaces ESLint+Prettier |
-| Deploy | Docker Compose | One command |
+| Deploy | Vercel | Auto-deploy from GitHub, serverless |
 | Auth | jose (JWT) | Standard, lightweight |
 | Validation | Zod | Runtime type safety |
 
 ## Implementation Phases
 
 ### Phase 0 — MVP (2-3 weekends)
-- [ ] Backend: Hono + SQLite + basic auth
+- [ ] Backend: Hono + Neon Postgres + Drizzle + basic auth
 - [ ] Game: Riders, orders, assign, deliver, get paid
-- [ ] Frontend: Minimal UI (functional, not pretty)
+- [ ] Frontend: SvelteKit + shadcn-svelte (minimal, functional)
 - [ ] Stage 1: Plain REST API (no protection)
-- [ ] Docker Compose
+- [ ] Deploy to Vercel
 - [ ] README with concept explanation
 - [ ] Post on r/incremental_games for feedback
 

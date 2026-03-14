@@ -68,11 +68,16 @@ As you progress, the game adds security layers (JWT, HMAC signing, obfuscation, 
 
 ## Quick start
 
+Play at [dropcoop.vercel.app](https://dropcoop.vercel.app) (coming soon).
+
+### Local development
+
 ```bash
-docker compose up
+npm install
+npm run dev
 ```
 
-Open http://localhost:3000 and start playing.
+Open http://localhost:5173 and start playing.
 
 ## Game mechanics
 
@@ -88,17 +93,20 @@ Open http://localhost:3000 and start playing.
 | Component | Technology |
 |-----------|-----------|
 | Backend | Hono (TypeScript) |
-| Database | SQLite |
-| Frontend | TBD (Vue 3 or React) |
-| Build | Vite |
+| Runtime | Node.js 22 |
+| Database | PostgreSQL (Neon) |
+| ORM | Drizzle |
+| Frontend | Svelte 5 + SvelteKit |
+| UI | shadcn-svelte |
+| Build | Vite + tsdown |
 | Test | Vitest |
-| Deploy | Docker Compose |
+| Deploy | Vercel |
 
 ## Development
 
 ```bash
 npm install
-npm run dev          # Start server + client
+npm run dev          # Start API + frontend
 npm test             # Run tests
 ```
 

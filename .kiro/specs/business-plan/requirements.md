@@ -4,7 +4,7 @@
 
 ## The Product
 
-A tycoon/simulation browser game where you manage a delivery rider cooperative. Playable by clicking in the browser, but with real API endpoints that hackers can reverse-engineer and automate. Self-hosted via Docker.
+A tycoon/simulation browser game where you manage a delivery rider cooperative. Playable by clicking in the browser, but with real API endpoints that hackers can reverse-engineer and automate. Hosted on Vercel (free tier).
 
 ## Target Audience
 
@@ -28,7 +28,7 @@ A tycoon/simulation browser game where you manage a delivery rider cooperative. 
 
 1. **No game like this exists** — tycoon + API hacking is a new genre
 2. **Two games in one** — casual tycoon for clickers, hacking sandbox for devs
-3. **Self-hosted** — no servers to maintain, no accounts, privacy-friendly
+3. **Zero setup** — play instantly in the browser, hosted on Vercel
 4. **Open source** — community can contribute stages, cities, events
 5. **Educational** — teaches real security concepts through gameplay
 
@@ -52,7 +52,7 @@ A tycoon/simulation browser game where you manage a delivery rider cooperative. 
 - Core game loop: hire riders, accept orders, deliver, get paid
 - Minimal UI (functional, not pretty)
 - Stage 1 only (plain REST API)
-- Docker Compose for easy setup
+- Deploy to Vercel (free tier)
 - Publish on itch.io (free)
 - Post on r/incremental_games: "I built a delivery tycoon where you can hack the API"
 
@@ -167,11 +167,14 @@ Even if the game fails, you have:
 | Genre | Idle Tycoon | Best effort/result ratio for solo dev |
 | Theme | Delivery cooperative | Unique, culturally relevant, rich mechanics |
 | Hacking approach | Progressive disclosure | Not forced, natural part of scaling |
-| Hosting | Self-hosted (Docker) | Zero ongoing costs, privacy-friendly |
+| Hosting | Vercel (free tier) | Zero config, auto-deploy, serverless |
 | Monetization | Free → donations → premium | Low friction, build community first |
-| Frontend framework | TBD (Vue or React) | Decide at implementation time |
-| Backend framework | Hono | Lightweight, TypeScript-native, fast |
-| Database | SQLite | Zero config, self-contained |
+| Frontend framework | Svelte 5 + SvelteKit | Compiler-driven, minimal boilerplate, great DX |
+| UI Components | shadcn-svelte | Accessible, copy-paste, Tailwind CSS |
+| Backend framework | Hono | Lightweight, TypeScript-native, zero-config on Vercel |
+| Runtime | Node.js 22 (LTS) | Stable, battle-tested |
+| Database | PostgreSQL (Neon) | Serverless, scale-to-zero, free tier |
+| ORM | Drizzle | Type-safe, SQL-first, native Neon support |
 
 ---
 

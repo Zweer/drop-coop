@@ -26,36 +26,41 @@ Additional references: `README.md`, `.kiro/steering/` for coding guidelines.
 - **Two-layer game**: Tycoon for casual players, API hacking for devs
 - **API-first**: Everything the frontend does goes through real API endpoints
 - **Progressive disclosure**: Automation hints appear as the game scales
-- **Self-hosted**: Docker Compose, one command to run
+- **Serverless**: Hosted on Vercel, zero infrastructure to manage
 - **Open source**: MIT license, community-driven
 
 ### Tech Stack
-- **Backend**: Hono or Fastify (TypeScript)
-- **Frontend**: Vue or React (simple, the focus is the backend)
-- **Database**: SQLite (zero infrastructure, self-contained)
-- **Deploy**: Docker Compose — `docker compose up` and play
-- **Build**: tsdown or Vite
+- **Backend**: Hono (TypeScript)
+- **Runtime**: Node.js 22 (LTS)
+- **Frontend**: Svelte 5 + SvelteKit + shadcn-svelte
+- **Database**: PostgreSQL (Neon) — serverless, scale-to-zero
+- **ORM**: Drizzle — type-safe, SQL-first
+- **Deploy**: Vercel (auto-deploy from GitHub)
+- **Build**: Vite (frontend), tsdown (shared packages)
 - **Test**: Vitest
 
 ### Project Structure
 ```
 drop-coop/
-├── server/              # Backend (TypeScript)
-│   ├── src/
-│   │   ├── game/        # Game logic (combat, inventory, market, etc.)
-│   │   ├── stages/      # API protection stages
-│   │   ├── api/         # API routes
-│   │   ├── db/          # SQLite schema and queries
-│   │   └── index.ts
-│   └── package.json
-│
-├── client/              # Frontend (the playable game)
-│   ├── src/
-│   └── package.json
+├── packages/
+│   ├── api/             # Backend (Hono API → Vercel serverless)
+│   │   ├── src/
+│   │   │   ├── routes/  # Route handlers
+│   │   │   ├── middleware/
+│   │   │   ├── db/      # Drizzle schema, migrations, connection
+│   │   │   └── index.ts
+│   │   └── package.json
+│   │
+│   ├── web/             # Frontend (SvelteKit → Vercel)
+│   │   ├── src/
+│   │   └── package.json
+│   │
+│   └── game/            # Game logic (pure functions, shared)
+│       ├── src/
+│       └── package.json
 │
 ├── challenges/          # Challenge descriptions per stage
 │   ├── stage1.md
-│   ├── stage2.md
 │   └── ...
 │
 ├── solutions/           # Official solutions (spoilers!)
@@ -63,7 +68,6 @@ drop-coop/
 │   │   └── bot.ts
 │   └── ...
 │
-├── docker-compose.yml
 └── README.md
 ```
 
