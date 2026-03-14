@@ -1,0 +1,40 @@
+{
+  "name": "@drop-coop/game",
+  "version": "0.0.0",
+  "private": true,
+  "description": "🎮 Core game logic for drop-coop (pure functions, shared)",
+  "keywords": [
+    "game",
+    "tycoon",
+    "delivery",
+    "engine"
+  ],
+  "homepage": "https://github.com/Zweer/drop-coop#readme",
+  "bugs": {
+    "url": "https://github.com/Zweer/drop-coop/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Zweer/drop-coop.git",
+    "directory": "packages/game"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Zweer",
+    "email": "n.olivieriachille@gmail.com"
+  },
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown"
+  },
+  "engines": {
+    "node": ">= 22"
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "name": "@drop-coop/web",
+  "version": "0.0.0",
+  "private": true,
+  "description": "🚲 SvelteKit frontend for drop-coop",
+  "keywords": [
+    "svelte",
+    "sveltekit",
+    "game",
+    "frontend"
+  ],
+  "homepage": "https://github.com/Zweer/drop-coop#readme",
+  "bugs": {
+    "url": "https://github.com/Zweer/drop-coop/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Zweer/drop-coop.git",
+    "directory": "packages/web"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Zweer",
+    "email": "n.olivieriachille@gmail.com"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@drop-coop/game": "*",
+    "@sveltejs/adapter-auto": "^4.0.0",
+    "@sveltejs/kit": "^2.21.0",
+    "@sveltejs/vite-plugin-svelte": "^5.0.0",
+    "svelte": "^5.28.0"
+  },
+  "devDependencies": {
+    "vite": "^6.3.0"
+  },
+  "engines": {
+    "node": ">= 22"
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "name": "@drop-coop/api",
+  "version": "0.0.0",
+  "private": true,
+  "description": "🔥 Hono API backend for drop-coop",
+  "keywords": [
+    "api",
+    "hono",
+    "game",
+    "backend"
+  ],
+  "homepage": "https://github.com/Zweer/drop-coop#readme",
+  "bugs": {
+    "url": "https://github.com/Zweer/drop-coop/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Zweer/drop-coop.git",
+    "directory": "packages/api"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Zweer",
+    "email": "n.olivieriachille@gmail.com"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/index.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@drop-coop/game": "*",
+    "@neondatabase/serverless": "^1.0.0",
+    "@hono/node-server": "^1.14.0",
+    "drizzle-orm": "^0.44.0",
+    "hono": "^4.7.0",
+    "jose": "^6.0.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.31.0"
+  },
+  "engines": {
+    "node": ">= 22"
+  }
+}
