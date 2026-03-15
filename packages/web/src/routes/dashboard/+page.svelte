@@ -7,6 +7,7 @@
   import { Progress } from '$lib/components/ui/progress'
   import { getProfile, setProfile } from '$lib/stores/profile.svelte'
   import { usePoll, useTick } from '$lib/stores/tick.svelte'
+  import { toast } from 'svelte-sonner'
   import { onMount } from 'svelte'
 
   let riders: Record<string, unknown>[] = $state([])
@@ -14,6 +15,10 @@
   let allOrders: Record<string, unknown>[] = $state([])
   let activeEvents: Record<string, unknown>[] = $state([])
   let loading = $state(true)
+
+  // Track previous state for micro-feedback
+  let prevAssigned = new Map<string, { riderId: string; reward: number }>()
+  let prevEventIds = new Set<string>()
 
   const clock = useTick()
 
@@ -24,11 +29,40 @@
       api.orders.available(),
       api.orders.list(),
     ])
+
+    // Micro-feedback: diff state before updating
+    if (!loading) {
+      const newEvents = (p.events ?? []) as Record<string, unknown>[]
+      for (const e of newEvents) {
+        if (!prevEventIds.has(e.id as string)) {
+          toast.info(`${e.emoji} ${e.name} started!`, { description: e.description as string })
+        }
+      }
+      for (const order of all) {
+        const prev = prevAssigned.get(order.id as string)
+        if (!prev) continue
+        const rider = r.find((rd: Record<string, unknown>) => rd.id === prev.riderId)
+        const name = (rider?.name ?? 'Rider') as string
+        if (order.status === 'delivered') {
+          toast.success(`${name} delivered! +€${prev.reward.toFixed(2)}`)
+        } else if (order.status === 'failed') {
+          toast.error(`${name} failed a delivery`)
+        }
+      }
+    }
+
     setProfile(p)
     riders = r
     orders = o
     allOrders = all
     activeEvents = (p.events ?? []) as Record<string, unknown>[]
+
+    // Snapshot for next diff
+    prevAssigned = new Map(
+      all.filter((o: Record<string, unknown>) => o.status === 'assigned')
+        .map((o: Record<string, unknown>) => [o.id as string, { riderId: o.riderId as string, reward: Number(o.reward) }])
+    )
+    prevEventIds = new Set(activeEvents.map(e => e.id as string))
   }
 
   onMount(async () => {

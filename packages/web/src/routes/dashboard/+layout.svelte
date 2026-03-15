@@ -30,10 +30,10 @@
   }
 
   const navItems = [
-    { href: '/dashboard', label: '📊 Dashboard' },
-    { href: '/dashboard/riders', label: '🏍️ Riders' },
-    { href: '/dashboard/orders', label: '📦 Orders' },
-    { href: '/dashboard/leaderboard', label: '🏆 Leaderboard' },
+    { href: '/dashboard', label: 'Dashboard', icon: '📊' },
+    { href: '/dashboard/riders', label: 'Riders', icon: '🏍️' },
+    { href: '/dashboard/orders', label: 'Orders', icon: '📦' },
+    { href: '/dashboard/leaderboard', label: 'Board', icon: '🏆' },
   ]
 
   const themeIcons: Record<string, string> = { light: '☀️', dark: '🌙', system: '💻' }
@@ -52,25 +52,25 @@
     <p class="text-muted-foreground">Loading your co-op...</p>
   </div>
 {:else if getProfile()}
-  <div class="min-h-screen flex flex-col">
-    <header class="border-b px-4 py-3 flex items-center justify-between bg-card">
-      <div class="flex items-center gap-6">
-        <a href="/dashboard" class="text-xl font-bold">🚲 drop-coop</a>
-        <nav class="flex gap-1">
+  <div class="min-h-screen flex flex-col pb-14 sm:pb-0">
+    <header class="border-b px-3 py-2.5 sm:px-4 sm:py-3 flex items-center justify-between bg-card">
+      <div class="flex items-center gap-4 sm:gap-6">
+        <a href="/dashboard" class="text-lg sm:text-xl font-bold">🚲 drop-coop</a>
+        <!-- Desktop nav -->
+        <nav class="hidden sm:flex gap-1">
           {#each navItems as item}
             <a
               href={item.href}
               class="px-3 py-1.5 rounded text-sm transition-colors {$page.url.pathname === item.href ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}"
             >
-              {item.label}
+              {item.icon} {item.label}
             </a>
           {/each}
         </nav>
       </div>
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2 sm:gap-4">
         <span class="text-sm font-medium">€{Number(getProfile()?.money).toFixed(0)}</span>
-        <!-- Level + progress -->
-        <div class="flex items-center gap-2">
+        <div class="hidden sm:flex items-center gap-2">
           <span class="text-sm text-muted-foreground">Lv.{getProfile()?.level}</span>
           {#if progression}
             <div class="w-16" title={nextMilestone ? `Next: Lv.${nextMilestone.level} — ${nextMilestone.description}` : 'Max level reached'}>
@@ -85,8 +85,21 @@
       </div>
     </header>
 
-    <main class="flex-1 p-6 max-w-5xl mx-auto w-full">
+    <main class="flex-1 p-4 sm:p-6 max-w-5xl mx-auto w-full">
       {@render children?.()}
     </main>
+
+    <!-- Mobile bottom nav -->
+    <nav class="sm:hidden fixed bottom-0 inset-x-0 border-t bg-card flex z-50">
+      {#each navItems as item}
+        <a
+          href={item.href}
+          class="flex-1 flex flex-col items-center gap-0.5 py-2 text-xs transition-colors {$page.url.pathname === item.href ? 'text-primary font-medium' : 'text-muted-foreground'}"
+        >
+          <span class="text-lg">{item.icon}</span>
+          {item.label}
+        </a>
+      {/each}
+    </nav>
   </div>
 {/if}

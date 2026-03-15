@@ -77,14 +77,14 @@
   </div>
 {:else}
 <div class="space-y-6">
-  <div class="flex items-center justify-between">
+  <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
     <div>
       <h2 class="text-2xl font-bold">🏍️ Riders</h2>
       <p class="text-sm text-muted-foreground">
         Manage your fleet. {canUpgrade ? 'Click stats to upgrade them!' : `Upgrades unlock at level 5.`}
       </p>
     </div>
-    <Button onclick={openPool}>
+    <Button onclick={openPool} class="w-full sm:w-auto">
       {showPool ? 'Refresh pool' : 'Browse hiring pool'}
     </Button>
   </div>

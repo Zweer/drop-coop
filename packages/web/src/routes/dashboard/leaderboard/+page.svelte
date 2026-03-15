@@ -33,14 +33,14 @@
     </Card>
   {:else}
     <Card>
-      <CardContent class="p-0">
-        <table class="w-full text-sm">
+      <CardContent class="p-0 overflow-x-auto">
+        <table class="w-full text-sm min-w-[400px]">
           <thead>
             <tr class="border-b text-left text-muted-foreground">
               <th class="p-3 w-12">#</th>
               <th class="p-3">Player</th>
-              <th class="p-3 text-right">Level</th>
-              <th class="p-3 text-right">Deliveries</th>
+              <th class="p-3 text-right hidden sm:table-cell">Level</th>
+              <th class="p-3 text-right hidden sm:table-cell">Deliveries</th>
               <th class="p-3 text-right">Profit</th>
             </tr>
           </thead>
@@ -59,8 +59,8 @@
                   {entry.username}
                   {#if isMe}<Badge variant="outline" class="ml-2 text-xs">You</Badge>{/if}
                 </td>
-                <td class="p-3 text-right text-muted-foreground">Lv.{entry.level}</td>
-                <td class="p-3 text-right text-muted-foreground">{entry.totalDeliveries}</td>
+                <td class="p-3 text-right text-muted-foreground hidden sm:table-cell">Lv.{entry.level}</td>
+                <td class="p-3 text-right text-muted-foreground hidden sm:table-cell">{entry.totalDeliveries}</td>
                 <td class="p-3 text-right font-mono">€{Number(entry.totalProfit).toFixed(0)}</td>
               </tr>
             {/each}

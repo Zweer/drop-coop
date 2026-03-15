@@ -157,7 +157,7 @@
           disabled={!selectedRider || !!assigning}
           onclick={() => quickAssign(order.id as string)}
         >
-          <div class="flex items-center justify-between gap-4">
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <div class="flex items-center gap-3">
               <span class="text-lg font-bold">€{Number(order.reward).toFixed(2)}</span>
               <Badge variant={style.variant}>{style.label}</Badge>
