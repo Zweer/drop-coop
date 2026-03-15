@@ -135,10 +135,10 @@ npm test             # Run tests
   - [x] Random events (storms, festivals, closures, viral reviews, sales)
   - [x] Leaderboard (tycoon rankings)
   - [x] OAuth login (GitHub, Google via arctic)
-  - [ ] JWT hardening (short expiry, refresh tokens)
-  - [ ] Stage 2: HMAC-protected bulk endpoints (batch assign, bulk upgrade)
-  - [ ] Stage 3: Analytics endpoints (demand forecast, rider efficiency)
-  - [ ] Challenge descriptions for stages 1-3
+  - [x] JWT hardening (short expiry, refresh tokens)
+  - [x] Stage 2: HMAC-protected bulk endpoints (batch assign, bulk upgrade)
+  - [x] Stage 3: Analytics endpoints (demand forecast, rider efficiency)
+  - [x] Challenge descriptions for stages 1-3
 - [ ] **Phase 2**: Cities, co-op mechanics, stages 4-5
 - [ ] **Phase 3**: WebSocket, protobuf, stages 6-8
 - [ ] **Phase 4**: Community features, mobile PWA

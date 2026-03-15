@@ -193,7 +193,7 @@ Stages are additive — each one builds on the previous. The challenge is not ju
 - [x] README with concept explanation
 - [ ] Post on r/incremental_games for feedback
 
-### Phase 1 — Core Game (in progress)
+### Phase 1 — Core Game ✅
 - [x] Security hardening (PBKDF2 passwords, CORS lockdown, rate limiting)
 - [x] Zones: 5 Milan zones with unlock, fees, zone-aware orders
 - [x] Progression system (levels from deliveries, milestones with unlocks)
@@ -206,10 +206,10 @@ Stages are additive — each one builds on the previous. The challenge is not ju
 - [x] Events: random events affecting gameplay
 - [x] Leaderboard (basic)
 - [x] OAuth login with arctic (GitHub, Google)
-- [ ] JWT hardening (short expiry, refresh tokens) — baseline security
-- [ ] Stage 2: HMAC-protected bulk endpoints (batch assign, bulk upgrade)
-- [ ] Stage 3: Analytics endpoints (demand forecast, rider efficiency)
-- [ ] Challenge descriptions for stages 1-3
+- [x] JWT hardening (short expiry, refresh tokens) — baseline security
+- [x] Stage 2: HMAC-protected bulk endpoints (batch assign, bulk upgrade)
+- [x] Stage 3: Analytics endpoints (demand forecast, rider efficiency)
+- [x] Challenge descriptions for stages 1-3
 
 ### Phase 2 — Depth (month 3-4)
 - [ ] Cooperative mechanics (voting, profit sharing)
@@ -240,5 +240,5 @@ Stages are additive — each one builds on the previous. The challenge is not ju
 *Tagline: "Your delivery co-op, your rules."*
 *GitHub: Zweer/drop-coop*
 *Decision made: 2026-03-14*
-*Status: Phase 0 complete, Phase 1 in progress*
+*Status: Phase 0 complete, Phase 1 complete*
 *Last updated: 2026-03-15*
