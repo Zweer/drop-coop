@@ -17,7 +17,11 @@
   let busy = $state(false)
 
   async function refreshRiders() {
-    riders = await api.riders.list()
+    try {
+      riders = await api.riders.list()
+    } catch {
+      // Silently ignore refresh errors
+    }
   }
 
   onMount(async () => {

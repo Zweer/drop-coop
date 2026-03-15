@@ -18,11 +18,15 @@
   const clock = useTick()
 
   async function refresh() {
-    ;[riders, orders, allOrders] = await Promise.all([
-      api.riders.list(),
-      api.orders.available(),
-      api.orders.list(),
-    ])
+    try {
+      ;[riders, orders, allOrders] = await Promise.all([
+        api.riders.list(),
+        api.orders.available(),
+        api.orders.list(),
+      ])
+    } catch {
+      // Silently ignore refresh errors
+    }
   }
 
   onMount(async () => {

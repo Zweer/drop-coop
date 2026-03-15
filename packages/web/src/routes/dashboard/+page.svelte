@@ -24,54 +24,58 @@
   const clock = useTick()
 
   async function refresh() {
-    const [p, r, o, all] = await Promise.all([
-      api.player.profile(),
-      api.riders.list(),
-      api.orders.available(),
-      api.orders.list(),
-    ])
+    try {
+      const [p, r, o, all] = await Promise.all([
+        api.player.profile(),
+        api.riders.list(),
+        api.orders.available(),
+        api.orders.list(),
+      ])
 
-    // Micro-feedback: diff state before updating
-    if (!loading) {
-      const newEvents = (p.events ?? []) as Record<string, unknown>[]
-      for (const e of newEvents) {
-        if (!prevEventIds.has(e.id as string)) {
-          toast.info(`${e.emoji} ${e.name} started!`, { description: e.description as string })
+      // Micro-feedback: diff state before updating
+      if (!loading) {
+        const newEvents = (p.events ?? []) as Record<string, unknown>[]
+        for (const e of newEvents) {
+          if (!prevEventIds.has(e.id as string)) {
+            toast.info(`${e.emoji} ${e.name} started!`, { description: e.description as string })
+          }
+        }
+
+        // First delivery celebration
+        const newTotal = Number(p.totalDeliveries)
+        if (prevTotalDeliveries === 0 && newTotal > 0) {
+          toast.success('🎉 First delivery completed!', { description: 'Your co-op is up and running. Keep going!' })
+        }
+
+        for (const order of all) {
+          const prev = prevAssigned.get(order.id as string)
+          if (!prev) continue
+          const rider = r.find((rd: Record<string, unknown>) => rd.id === prev.riderId)
+          const name = (rider?.name ?? 'Rider') as string
+          if (order.status === 'delivered') {
+            toast.success(`${name} delivered! +€${prev.reward.toFixed(2)}`)
+          } else if (order.status === 'failed') {
+            toast.error(`${name} failed a delivery`)
+          }
         }
       }
 
-      // First delivery celebration
-      const newTotal = Number(p.totalDeliveries)
-      if (prevTotalDeliveries === 0 && newTotal > 0) {
-        toast.success('🎉 First delivery completed!', { description: 'Your co-op is up and running. Keep going!' })
-      }
+      setProfile(p)
+      riders = r
+      orders = o
+      allOrders = all
+      activeEvents = (p.events ?? []) as Record<string, unknown>[]
 
-      for (const order of all) {
-        const prev = prevAssigned.get(order.id as string)
-        if (!prev) continue
-        const rider = r.find((rd: Record<string, unknown>) => rd.id === prev.riderId)
-        const name = (rider?.name ?? 'Rider') as string
-        if (order.status === 'delivered') {
-          toast.success(`${name} delivered! +€${prev.reward.toFixed(2)}`)
-        } else if (order.status === 'failed') {
-          toast.error(`${name} failed a delivery`)
-        }
-      }
+      // Snapshot for next diff
+      prevAssigned = new Map(
+        all.filter((o: Record<string, unknown>) => o.status === 'assigned')
+          .map((o: Record<string, unknown>) => [o.id as string, { riderId: o.riderId as string, reward: Number(o.reward) }])
+      )
+      prevEventIds = new Set(activeEvents.map(e => e.id as string))
+      prevTotalDeliveries = Number(getProfile()?.totalDeliveries)
+    } catch {
+      // Silently ignore refresh errors — stale data is fine
     }
-
-    setProfile(p)
-    riders = r
-    orders = o
-    allOrders = all
-    activeEvents = (p.events ?? []) as Record<string, unknown>[]
-
-    // Snapshot for next diff
-    prevAssigned = new Map(
-      all.filter((o: Record<string, unknown>) => o.status === 'assigned')
-        .map((o: Record<string, unknown>) => [o.id as string, { riderId: o.riderId as string, reward: Number(o.reward) }])
-    )
-    prevEventIds = new Set(activeEvents.map(e => e.id as string))
-    prevTotalDeliveries = Number(getProfile()?.totalDeliveries)
   }
 
   onMount(async () => {
@@ -185,6 +189,8 @@
             {#if Number(lastTick.revenue) > 0}<span class="text-green-600">+€{Number(lastTick.revenue).toFixed(0)}</span>{/if}
             {#if Number(lastTick.costs) > 0}<span class="text-red-500 ml-1">-€{Number(lastTick.costs).toFixed(0)}</span>{/if}
           </p>
+        {:else}
+          <p class="text-xs mt-1 text-muted-foreground">Total: €{Number(getProfile()?.totalProfit).toFixed(0)}</p>
         {/if}
       </CardContent>
     </Card>

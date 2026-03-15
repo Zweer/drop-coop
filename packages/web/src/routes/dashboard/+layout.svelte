@@ -33,6 +33,7 @@
     { href: '/dashboard', label: 'Dashboard', icon: '📊' },
     { href: '/dashboard/riders', label: 'Riders', icon: '🏍️' },
     { href: '/dashboard/orders', label: 'Orders', icon: '📦' },
+    { href: '/dashboard/zones', label: 'Zones', icon: '🗺️' },
     { href: '/dashboard/leaderboard', label: 'Board', icon: '🏆' },
   ]
 

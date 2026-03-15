@@ -78,6 +78,14 @@ export const api = {
   events: {
     list: () => request<Record<string, unknown>[]>('/events'),
   },
+  zones: {
+    list: () => request<Record<string, unknown>[]>('/zones'),
+    unlock: (zoneId: string) =>
+      request<Record<string, unknown>>('/zones/unlock', {
+        method: 'POST',
+        body: JSON.stringify({ zoneId }),
+      }),
+  },
   leaderboard: {
     top: () => request<Record<string, unknown>[]>('/leaderboard'),
   },
