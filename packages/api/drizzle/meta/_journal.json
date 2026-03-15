@@ -43,6 +43,13 @@
       "when": 1773599703536,
       "tag": "0005_auth-accounts",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1773616290232,
+      "tag": "0006_rider-pool",
+      "breakpoints": true
     }
   ]
 }

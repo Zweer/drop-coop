@@ -125,11 +125,11 @@ export const api = {
   },
   riders: {
     list: () => request<Record<string, unknown>[]>('/riders'),
-    pool: () => request<Record<string, unknown>[]>('/riders/pool'),
-    hire: (rider: Record<string, unknown>) =>
+    pool: () => request<{ riders: Record<string, unknown>[]; refreshesIn: number }>('/riders/pool'),
+    hire: (poolId: string) =>
       request<Record<string, unknown>>('/riders/hire', {
         method: 'POST',
-        body: JSON.stringify(rider),
+        body: JSON.stringify({ poolId }),
       }),
     upgrade: (riderId: string, stat: string) =>
       request<Record<string, unknown>>(`/riders/${riderId}/upgrade`, {

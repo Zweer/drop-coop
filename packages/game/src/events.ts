@@ -92,7 +92,7 @@ export function mergeEventEffects(eventTypes: EventType[]): TickModifiers {
 }
 
 /** Average chance of a new event per hour. Scales with player level. */
-const BASE_EVENT_CHANCE_PER_HOUR = 0.08;
+export const BASE_EVENT_CHANCE_PER_HOUR = 0.08;
 
 /**
  * Determine how many new events should spawn given elapsed time.

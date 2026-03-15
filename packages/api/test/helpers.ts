@@ -36,9 +36,11 @@ export function createMockDb() {
       events: { findFirst: vi.fn(), findMany: vi.fn() },
       authAccounts: { findFirst: vi.fn(), findMany: vi.fn() },
       playerZones: { findFirst: vi.fn(), findMany: vi.fn() },
+      riderPool: { findFirst: vi.fn(), findMany: vi.fn() },
       zones: { findFirst: vi.fn(), findMany: vi.fn() },
     },
     insert: vi.fn(),
     update: vi.fn(),
+    delete: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) }),
   };
 }

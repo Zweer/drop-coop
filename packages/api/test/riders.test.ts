@@ -60,29 +60,81 @@ describe('GET /api/riders', () => {
 });
 
 describe('GET /api/riders/pool', () => {
-  it('should return 3 riders', async () => {
+  it('should return pool with riders and refresh timer', async () => {
+    const poolEntries = [
+      {
+        id: '00000000-0000-0000-0000-000000000001',
+        playerId: PLAYER_ID,
+        name: 'Marco',
+        speed: 5,
+        reliability: 5,
+        cityKnowledge: 5,
+        stamina: 5,
+        hireCost: 50,
+        salary: 10,
+        expiresAt: new Date(Date.now() + 3600000),
+      },
+    ];
+    mockDb.query.riderPool.findMany.mockResolvedValueOnce(poolEntries);
+
     const res = await get('/api/riders/pool');
 
     expect(res.status).toBe(200);
-    const pool: any = await res.json();
-    expect(pool).toHaveLength(3);
-    expect(pool[0]).toHaveProperty('name');
-    expect(pool[0]).toHaveProperty('speed');
-    expect(pool[0]).toHaveProperty('hireCost');
+    const body: any = await res.json();
+    expect(body.riders).toHaveLength(1);
+    expect(body.riders[0]).toHaveProperty('name');
+    expect(body).toHaveProperty('refreshesIn');
+  });
+
+  it('should generate pool if empty', async () => {
+    mockDb.query.riderPool.findMany.mockResolvedValueOnce([]);
+    const generated = [
+      {
+        id: '00000000-0000-0000-0000-000000000002',
+        name: 'Sara',
+        speed: 4,
+        reliability: 6,
+        cityKnowledge: 3,
+        stamina: 5,
+        hireCost: 45,
+        salary: 9,
+        expiresAt: new Date(Date.now() + 3600000),
+      },
+    ];
+    mockDb.insert.mockReturnValueOnce(mockInsertReturning(generated));
+
+    const res = await get('/api/riders/pool');
+
+    expect(res.status).toBe(200);
+    const body: any = await res.json();
+    expect(body.riders).toHaveLength(1);
   });
 });
 
 describe('POST /api/riders/hire', () => {
-  const hireBody = { name: 'Marco', speed: 5, reliability: 5, cityKnowledge: 5, stamina: 5 };
+  const POOL_ID = '00000000-0000-0000-0000-000000000001';
 
-  it('should hire a rider', async () => {
+  it('should hire a rider from pool', async () => {
+    const poolEntry = {
+      id: POOL_ID,
+      playerId: PLAYER_ID,
+      name: 'Marco',
+      speed: 5,
+      reliability: 5,
+      cityKnowledge: 5,
+      stamina: 5,
+      hireCost: 50,
+      salary: 10,
+    };
+    mockDb.query.riderPool.findFirst.mockResolvedValueOnce(poolEntry);
     mockDb.query.players.findFirst.mockResolvedValueOnce({ id: PLAYER_ID, money: 500 });
-    mockDb.update.mockReturnValueOnce(mockUpdateWhere());
+    mockDb.update.mockReturnValueOnce(mockUpdateWhere()); // player money
     mockDb.insert.mockReturnValueOnce(
-      mockInsertReturning([{ id: 'r1', ...hireBody, playerId: PLAYER_ID }]),
+      mockInsertReturning([{ id: 'r1', ...poolEntry, playerId: PLAYER_ID }]),
     );
+    mockDb.delete.mockReturnValueOnce({ where: vi.fn().mockResolvedValue(undefined) });
 
-    const res = await post('/api/riders/hire', hireBody);
+    const res = await post('/api/riders/hire', { poolId: POOL_ID });
 
     expect(res.status).toBe(201);
     const body: any = await res.json();
@@ -90,17 +142,33 @@ describe('POST /api/riders/hire', () => {
   });
 
   it('should reject if not enough money', async () => {
+    const poolEntry = {
+      id: POOL_ID,
+      playerId: PLAYER_ID,
+      name: 'Marco',
+      speed: 5,
+      reliability: 5,
+      cityKnowledge: 5,
+      stamina: 5,
+      hireCost: 50,
+      salary: 10,
+    };
+    mockDb.query.riderPool.findFirst.mockResolvedValueOnce(poolEntry);
     mockDb.query.players.findFirst.mockResolvedValueOnce({ id: PLAYER_ID, money: 1 });
 
-    const res = await post('/api/riders/hire', hireBody);
+    const res = await post('/api/riders/hire', { poolId: POOL_ID });
 
     expect(res.status).toBe(400);
-    expect(((await res.json()) as any).error).toMatch(/money/i);
+    const body: any = await res.json();
+    expect(body.error).toMatch(/money/i);
   });
 
-  it('should reject invalid stats', async () => {
-    const res = await post('/api/riders/hire', { name: 'Marco', speed: 99 });
-    expect(res.status).toBe(400);
+  it('should reject if pool entry not found', async () => {
+    mockDb.query.riderPool.findFirst.mockResolvedValueOnce(undefined);
+
+    const res = await post('/api/riders/hire', { poolId: '00000000-0000-0000-0000-000000000099' });
+
+    expect(res.status).toBe(404);
   });
 });
 

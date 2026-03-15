@@ -12,6 +12,7 @@
 
   let riders: Record<string, unknown>[] = $state([])
   let pool: Record<string, unknown>[] = $state([])
+  let poolRefreshesIn = $state(0)
   let showPool = $state(false)
   let loading = $state(true)
   let busy = $state(false)
@@ -32,7 +33,9 @@
   usePoll(refreshRiders, 15_000)
 
   async function openPool() {
-    pool = await api.riders.pool()
+    const result = await api.riders.pool()
+    pool = result.riders
+    poolRefreshesIn = result.refreshesIn
     showPool = true
   }
 
@@ -40,10 +43,10 @@
     if (busy) return
     busy = true
     try {
-      await api.riders.hire(candidate)
+      await api.riders.hire(candidate.id as string)
       toast.success(`${candidate.name} hired!`, { description: `Salary: €${candidate.salary}/hr` })
       await refreshRiders()
-      showPool = false
+      await openPool()
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Hire failed')
     } finally {
@@ -98,7 +101,7 @@
     <Card class="border-dashed">
       <CardHeader>
         <CardTitle class="text-base">📋 Hiring Pool</CardTitle>
-        <CardDescription>Better stats = higher cost and salary.</CardDescription>
+        <CardDescription>Better stats = higher cost and salary. Pool refreshes in {Math.floor(poolRefreshesIn / 3600)}h {Math.floor((poolRefreshesIn % 3600) / 60)}m.</CardDescription>
       </CardHeader>
       <CardContent class="space-y-3">
         {#each pool as candidate}
