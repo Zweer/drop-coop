@@ -1,5 +1,6 @@
 import {
   calculateDeliveryMinutes,
+  calculateDemandMultiplier,
   calculateFailureChance,
   calculateMaxOrders,
   calculateOrderRate,
@@ -8,11 +9,18 @@ import {
   seededRandom,
 } from './economy.js';
 import { calculateLevel } from './progression.js';
-import type { Order, Player, Rider } from './types.js';
+import type { Order, Player, Rider, TickModifiers } from './types.js';
 
 const ENERGY_REGEN_PER_HOUR = 10;
 const REPUTATION_PER_DELIVERY = 0.5;
 const REPUTATION_PER_FAILURE = -2;
+
+const DEFAULT_MODIFIERS: TickModifiers = {
+  speedMultiplier: 1,
+  rewardMultiplier: 1,
+  orderRateMultiplier: 1,
+  upgradeCostMultiplier: 1,
+};
 
 export interface TickResult {
   player: Player;
@@ -23,6 +31,8 @@ export interface TickResult {
   failedDeliveries: number;
   /** How many new orders the API layer should generate and insert. */
   newOrderCount: number;
+  /** Reward multiplier to apply when generating new orders. */
+  rewardMultiplier: number;
 }
 
 /**
@@ -34,10 +44,20 @@ export function processTick(
   riders: Rider[],
   orders: Order[],
   now: Date,
+  modifiers: TickModifiers = DEFAULT_MODIFIERS,
 ): TickResult {
   const elapsedMs = now.getTime() - player.lastTickAt.getTime();
   if (elapsedMs <= 0)
-    return { player, riders, orders, revenue: 0, costs: 0, failedDeliveries: 0, newOrderCount: 0 };
+    return {
+      player,
+      riders,
+      orders,
+      revenue: 0,
+      costs: 0,
+      failedDeliveries: 0,
+      newOrderCount: 0,
+      rewardMultiplier: 1,
+    };
 
   const elapsedHours = elapsedMs / (1000 * 60 * 60);
   let revenue = 0;
@@ -50,11 +70,10 @@ export function processTick(
     const rider = riders.find((r) => r.id === order.riderId);
     if (!rider) return order;
 
-    const deliveryMinutes = calculateDeliveryMinutes(rider, order);
+    const deliveryMinutes = calculateDeliveryMinutes(rider, order) / modifiers.speedMultiplier;
     const doneAt = new Date(order.assignedAt.getTime() + deliveryMinutes * 60 * 1000);
 
     if (now >= doneAt) {
-      // Deterministic failure check based on order id
       const failChance = calculateFailureChance(rider);
       const roll = seededRandom(order.id);
 
@@ -121,11 +140,17 @@ export function processTick(
     lastTickAt: now,
   };
 
-  // 7. Calculate new orders to generate
+  // 7. Calculate new orders to generate (with event + demand modifiers)
   const availableCount = finalOrders.filter((o) => o.status === 'available').length;
+  const idleCount = updatedRiders.filter((r) => r.status === 'idle').length;
   const maxOrders = calculateMaxOrders(player);
-  const couldArrive = Math.floor(calculateOrderRate(player) * elapsedHours);
+  const baseRate = calculateOrderRate(player) * modifiers.orderRateMultiplier;
+  const couldArrive = Math.floor(baseRate * elapsedHours);
   const newOrderCount = Math.max(0, Math.min(couldArrive, maxOrders - availableCount));
+
+  // Reward multiplier: events + demand
+  const demandMult = calculateDemandMultiplier(availableCount, idleCount);
+  const rewardMultiplier = modifiers.rewardMultiplier * demandMult;
 
   return {
     player: updatedPlayer,
@@ -135,5 +160,6 @@ export function processTick(
     costs,
     failedDeliveries,
     newOrderCount,
+    rewardMultiplier,
   };
 }

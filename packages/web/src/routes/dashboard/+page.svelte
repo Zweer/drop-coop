@@ -12,6 +12,7 @@
   let riders: Record<string, unknown>[] = $state([])
   let orders: Record<string, unknown>[] = $state([])
   let allOrders: Record<string, unknown>[] = $state([])
+  let activeEvents: Record<string, unknown>[] = $state([])
   let loading = $state(true)
 
   const clock = useTick()
@@ -27,6 +28,7 @@
     riders = r
     orders = o
     allOrders = all
+    activeEvents = (p.events ?? []) as Record<string, unknown>[]
   }
 
   onMount(async () => {
@@ -158,6 +160,28 @@
         </CardContent>
       </Card>
     {/if}
+  {/if}
+
+  <!-- Active events -->
+  {#if activeEvents.length > 0}
+    <Card class="border-yellow-500/20 bg-yellow-500/5">
+      <CardHeader class="pb-2">
+        <CardTitle class="text-base">⚡ Active Events</CardTitle>
+      </CardHeader>
+      <CardContent class="space-y-2">
+        {#each activeEvents as event}
+          <div class="flex items-center justify-between border rounded p-2 text-sm">
+            <div>
+              <span>{event.emoji} <span class="font-medium">{event.name}</span></span>
+              <span class="text-muted-foreground ml-2">{event.description}</span>
+            </div>
+            <span class="text-xs font-mono text-muted-foreground shrink-0 ml-2">
+              ⏱️ {formatRemaining(new Date(event.expiresAt as string).getTime())}
+            </span>
+          </div>
+        {/each}
+      </CardContent>
+    </Card>
   {/if}
 
   <!-- Active deliveries with live countdown -->

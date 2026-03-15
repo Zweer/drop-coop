@@ -73,6 +73,16 @@ export function seededRandom(seed: string): number {
   return ((h >>> 0) % 10000) / 10000;
 }
 
+/**
+ * Dynamic pricing multiplier based on supply/demand.
+ * More available orders relative to idle riders → higher rewards.
+ */
+export function calculateDemandMultiplier(availableOrders: number, idleRiders: number): number {
+  if (idleRiders === 0) return availableOrders > 0 ? 2.0 : 1.0;
+  const ratio = availableOrders / idleRiders;
+  return Math.min(2.0, Math.max(0.8, 0.8 + ratio * 0.2));
+}
+
 const UPGRADE_BASE_COST = 30;
 const UPGRADEABLE_STATS = ['speed', 'reliability', 'cityKnowledge', 'stamina'] as const;
 export type UpgradeableStat = (typeof UPGRADEABLE_STATS)[number];

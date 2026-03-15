@@ -52,3 +52,26 @@ export interface Zone {
   trafficDensity: number;
   unlockCost: number;
 }
+
+export type EventType =
+  | 'rainstorm'
+  | 'food_festival'
+  | 'bike_lane_closure'
+  | 'viral_review'
+  | 'equipment_sale';
+
+export interface GameEvent {
+  id: string;
+  playerId: string;
+  type: EventType;
+  zoneId: string | null;
+  startsAt: Date;
+  expiresAt: Date;
+}
+
+export interface TickModifiers {
+  speedMultiplier: number;
+  rewardMultiplier: number;
+  orderRateMultiplier: number;
+  upgradeCostMultiplier: number;
+}

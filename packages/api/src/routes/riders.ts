@@ -1,10 +1,11 @@
-import { calculateUpgradeCost, isUpgradeableStat } from '@drop-coop/game';
-import { and, eq } from 'drizzle-orm';
+import type { EventType } from '@drop-coop/game';
+import { calculateUpgradeCost, isUpgradeableStat, mergeEventEffects } from '@drop-coop/game';
+import { and, eq, gt } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { z } from 'zod';
 
 import { db } from '../db/index.ts';
-import { players, riders } from '../models/index.ts';
+import { events, players, riders } from '../models/index.ts';
 import type { AppEnv } from '../types.ts';
 
 const NAMES = [
@@ -133,7 +134,14 @@ ridersRoute.post('/:id/upgrade', async (c) => {
   const currentValue = rider[stat];
   if (currentValue >= MAX_STAT) return c.json({ error: 'Stat already at max' }, 400);
 
-  const cost = calculateUpgradeCost(currentValue);
+  // Check for active events that modify upgrade cost
+  const now = new Date();
+  const activeEvents = await db.query.events.findMany({
+    where: and(eq(events.playerId, playerId), gt(events.expiresAt, now)),
+  });
+  const mods = mergeEventEffects(activeEvents.map((e) => e.type) as EventType[]);
+
+  const cost = Math.round(calculateUpgradeCost(currentValue) * mods.upgradeCostMultiplier);
   if (player.money < cost) return c.json({ error: 'Not enough money' }, 400);
 
   await db

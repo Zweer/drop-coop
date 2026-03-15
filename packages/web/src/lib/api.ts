@@ -75,4 +75,7 @@ export const api = {
         body: JSON.stringify({ riderId, orderId }),
       }),
   },
+  events: {
+    list: () => request<Record<string, unknown>[]>('/events'),
+  },
 };

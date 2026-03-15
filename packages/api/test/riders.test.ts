@@ -126,6 +126,7 @@ describe('POST /api/riders/:id/upgrade', () => {
       playerId: PLAYER_ID,
       speed: 5,
     });
+    mockDb.query.events.findMany.mockResolvedValueOnce([]); // no active events
     mockDb.update.mockReturnValueOnce(mockUpdateWhere()); // player money
     mockDb.update.mockReturnValueOnce(mockUpdateWhere()); // rider stat
 
@@ -173,6 +174,7 @@ describe('POST /api/riders/:id/upgrade', () => {
       playerId: PLAYER_ID,
       speed: 5,
     });
+    mockDb.query.events.findMany.mockResolvedValueOnce([]); // no active events
 
     const res = await postUpgrade(RIDER_ID, { stat: 'speed' });
 

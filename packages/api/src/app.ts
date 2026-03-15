@@ -4,6 +4,7 @@ import { cors } from 'hono/cors';
 import { authMiddleware } from './middleware/auth.ts';
 import { rateLimiter } from './middleware/rate-limit.ts';
 import auth from './routes/auth.ts';
+import eventsRoute from './routes/events.ts';
 import ordersRoute from './routes/orders.ts';
 import player from './routes/player.ts';
 import ridersRoute from './routes/riders.ts';
@@ -48,5 +49,6 @@ app.route('/api/player', player);
 app.route('/api/riders', ridersRoute);
 app.route('/api/orders', ordersRoute);
 app.route('/api/zones', zonesRoute);
+app.route('/api/events', eventsRoute);
 
 export default app;
