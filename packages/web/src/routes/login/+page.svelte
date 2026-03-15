@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
   import { page } from '$app/stores'
-  import { api, setToken } from '$lib/api'
+  import { api, setToken, setRefreshToken } from '$lib/api'
   import { Button } from '$lib/components/ui/button'
   import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card'
   import { Input } from '$lib/components/ui/input'
@@ -18,10 +18,12 @@
     // Handle OAuth callback — token passed via URL
     const params = new URLSearchParams($page.url.search)
     const token = params.get('token')
+    const rt = params.get('refreshToken')
     const oauthError = params.get('error')
 
     if (token) {
       setToken(token)
+      if (rt) setRefreshToken(rt)
       goto('/dashboard')
       return
     }
@@ -35,8 +37,9 @@
     loading = true
     try {
       const fn = isLogin ? api.auth.login : api.auth.register
-      const { token } = await fn(username, password)
+      const { token, refreshToken } = await fn(username, password)
       setToken(token)
+      setRefreshToken(refreshToken)
       goto('/dashboard')
     } catch (e) {
       error = e instanceof Error ? e.message : 'Something went wrong'

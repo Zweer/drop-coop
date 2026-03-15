@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
   import { page } from '$app/stores'
-  import { api, getToken, setToken } from '$lib/api'
+  import { api, getToken, setToken, setRefreshToken } from '$lib/api'
   import { Button } from '$lib/components/ui/button'
   import { Progress } from '$lib/components/ui/progress'
   import { getProfile, setProfile } from '$lib/stores/profile.svelte'
@@ -26,6 +26,7 @@
 
   function logout() {
     setToken(null)
+    setRefreshToken(null)
     goto('/login')
   }
 

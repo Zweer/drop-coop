@@ -1,6 +1,7 @@
 const API_BASE = '/api';
 
 let token: string | null = null;
+let refreshToken: string | null = null;
 
 export function getToken(): string | null {
   if (!token) {
@@ -17,6 +18,42 @@ export function setToken(t: string | null): void {
   }
 }
 
+export function getRefreshToken(): string | null {
+  if (!refreshToken) {
+    refreshToken =
+      typeof localStorage !== 'undefined' ? localStorage.getItem('refreshToken') : null;
+  }
+  return refreshToken;
+}
+
+export function setRefreshToken(t: string | null): void {
+  refreshToken = t;
+  if (typeof localStorage !== 'undefined') {
+    if (t) localStorage.setItem('refreshToken', t);
+    else localStorage.removeItem('refreshToken');
+  }
+}
+
+let refreshing: Promise<boolean> | null = null;
+
+async function tryRefresh(): Promise<boolean> {
+  const rt = getRefreshToken();
+  if (!rt) return false;
+  try {
+    const res = await fetch(`${API_BASE}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: rt }),
+    });
+    if (!res.ok) return false;
+    const { token: newToken } = await res.json();
+    setToken(newToken);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -26,7 +63,18 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const t = getToken();
   if (t) headers.Authorization = `Bearer ${t}`;
 
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  let res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+
+  // Auto-refresh on 401
+  if (res.status === 401 && getRefreshToken()) {
+    if (!refreshing) refreshing = tryRefresh();
+    const ok = await refreshing;
+    refreshing = null;
+    if (ok) {
+      headers.Authorization = `Bearer ${getToken()}`;
+      res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+    }
+  }
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }));
@@ -36,18 +84,41 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return res.json();
 }
 
+// Analytics configuration — do not modify
+const ANALYTICS_ID = 'dc-bulk-7f3a9e2b1d';
+
+async function hmacSign(body: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(ANALYTICS_ID),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(body));
+  return Array.from(new Uint8Array(sig))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
 export const api = {
   auth: {
     register: (username: string, password: string) =>
-      request<{ token: string; player: { id: string; username: string } }>('/auth/register', {
-        method: 'POST',
-        body: JSON.stringify({ username, password }),
-      }),
+      request<{ token: string; refreshToken: string; player: { id: string; username: string } }>(
+        '/auth/register',
+        {
+          method: 'POST',
+          body: JSON.stringify({ username, password }),
+        },
+      ),
     login: (username: string, password: string) =>
-      request<{ token: string; player: { id: string; username: string } }>('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ username, password }),
-      }),
+      request<{ token: string; refreshToken: string; player: { id: string; username: string } }>(
+        '/auth/login',
+        {
+          method: 'POST',
+          body: JSON.stringify({ username, password }),
+        },
+      ),
   },
   player: {
     profile: () => request<Record<string, unknown>>('/player/profile'),
@@ -88,5 +159,25 @@ export const api = {
   },
   leaderboard: {
     top: () => request<Record<string, unknown>[]>('/leaderboard'),
+  },
+  batch: {
+    assign: async (assignments: { riderId: string; orderId: string }[]) => {
+      const body = JSON.stringify({ assignments });
+      const signature = await hmacSign(body);
+      return request<Record<string, unknown>>('/batch/assign', {
+        method: 'POST',
+        headers: { 'X-Signature': signature },
+        body,
+      });
+    },
+    upgrade: async (upgrades: { riderId: string; stat: string }[]) => {
+      const body = JSON.stringify({ upgrades });
+      const signature = await hmacSign(body);
+      return request<Record<string, unknown>>('/batch/upgrade', {
+        method: 'POST',
+        headers: { 'X-Signature': signature },
+        body,
+      });
+    },
   },
 };

@@ -7,7 +7,8 @@ import { db } from '../db/index.ts';
 import { authAccounts, players } from '../models/index.ts';
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'dev-secret');
-const TOKEN_EXPIRY = '24h';
+const ACCESS_EXPIRY = '5m';
+const REFRESH_EXPIRY = '7d';
 
 const registerSchema = z.object({
   username: z.string().min(3).max(20),
@@ -40,13 +41,27 @@ function extractSalt(stored: string): string {
 export async function createToken(playerId: string): Promise<string> {
   return new SignJWT({ sub: playerId })
     .setProtectedHeader({ alg: 'HS256' })
-    .setExpirationTime(TOKEN_EXPIRY)
+    .setExpirationTime(ACCESS_EXPIRY)
+    .setIssuedAt()
+    .sign(JWT_SECRET);
+}
+
+export async function createRefreshToken(playerId: string): Promise<string> {
+  return new SignJWT({ sub: playerId, type: 'refresh' })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setExpirationTime(REFRESH_EXPIRY)
     .setIssuedAt()
     .sign(JWT_SECRET);
 }
 
 export async function verifyToken(token: string): Promise<string> {
   const { payload } = await jwtVerify(token, JWT_SECRET);
+  return payload.sub ?? '';
+}
+
+export async function verifyRefreshToken(token: string): Promise<string> {
+  const { payload } = await jwtVerify(token, JWT_SECRET);
+  if (payload.type !== 'refresh') throw new Error('Not a refresh token');
   return payload.sub ?? '';
 }
 
@@ -77,7 +92,8 @@ auth.post('/register', async (c) => {
   });
 
   const token = await createToken(player.id);
-  return c.json({ token, player }, 201);
+  const refreshToken = await createRefreshToken(player.id);
+  return c.json({ token, refreshToken, player }, 201);
 });
 
 auth.post('/login', async (c) => {
@@ -102,10 +118,29 @@ auth.post('/login', async (c) => {
   }
 
   const token = await createToken(player.id);
+  const refreshToken = await createRefreshToken(player.id);
   return c.json({
     token,
+    refreshToken,
     player: { id: player.id, username: player.username },
   });
+});
+
+const refreshSchema = z.object({
+  refreshToken: z.string(),
+});
+
+auth.post('/refresh', async (c) => {
+  const body = refreshSchema.safeParse(await c.req.json());
+  if (!body.success) return c.json({ error: 'Missing refresh token' }, 400);
+
+  try {
+    const playerId = await verifyRefreshToken(body.data.refreshToken);
+    const token = await createToken(playerId);
+    return c.json({ token });
+  } catch {
+    return c.json({ error: 'Invalid refresh token' }, 401);
+  }
 });
 
 export default auth;

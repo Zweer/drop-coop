@@ -5,7 +5,7 @@ import { getCookie, setCookie } from 'hono/cookie';
 
 import { db } from '../db/index.ts';
 import { authAccounts, players } from '../models/index.ts';
-import { createToken } from './auth.ts';
+import { createRefreshToken, createToken } from './auth.ts';
 
 function getBaseUrl(c: { req: { url: string } }): string {
   const url = new URL(c.req.url);
@@ -88,7 +88,8 @@ oauth.get('/github/callback', async (c) => {
 
     const playerId = await findOrCreateOAuthPlayer('github', String(ghUser.id), ghUser.login);
     const token = await createToken(playerId);
-    return c.redirect(`/login?token=${token}`);
+    const refreshToken = await createRefreshToken(playerId);
+    return c.redirect(`/login?token=${token}&refreshToken=${refreshToken}`);
   } catch {
     return c.redirect('/login?error=oauth_failed');
   }
@@ -145,7 +146,8 @@ oauth.get('/google/callback', async (c) => {
       claims.name?.replace(/\s+/g, '_').toLowerCase() ?? `player_${claims.sub.slice(0, 8)}`;
     const playerId = await findOrCreateOAuthPlayer('google', claims.sub, username);
     const token = await createToken(playerId);
-    return c.redirect(`/login?token=${token}`);
+    const refreshToken = await createRefreshToken(playerId);
+    return c.redirect(`/login?token=${token}&refreshToken=${refreshToken}`);
   } catch {
     return c.redirect('/login?error=oauth_failed');
   }
