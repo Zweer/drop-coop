@@ -29,3 +29,5 @@ export type {
   RiderStatus,
   Zone,
 } from './types.js';
+export type { ZoneDefinition } from './zones.js';
+export { ZONES } from './zones.js';

@@ -1,16 +1,25 @@
 import type { Order, OrderUrgency, Player, Rider } from '@drop-coop/game';
-import { processTick } from '@drop-coop/game';
+import { processTick, ZONES } from '@drop-coop/game';
 import { and, eq, inArray } from 'drizzle-orm';
 
 import { db } from '../db/index.ts';
-import { orders, players, riders } from '../models/index.ts';
+import { orders, players, playerZones, riders, zones } from '../models/index.ts';
 
 const URGENCIES: OrderUrgency[] = ['normal', 'normal', 'normal', 'urgent', 'express'];
 
-function generateOrders(playerId: string, count: number) {
+function generateOrders(
+  playerId: string,
+  count: number,
+  unlockedZones: { id: string; slug: string }[],
+) {
   const now = new Date();
   return Array.from({ length: count }, () => {
-    const distance = Math.round((Math.random() * 8 + 1) * 10) / 10;
+    // Pick a random unlocked zone
+    const zone = unlockedZones[Math.floor(Math.random() * unlockedZones.length)];
+    const zoneDef = ZONES.find((z) => z.slug === zone.slug);
+    const [minDist, maxDist] = zoneDef?.distanceRange ?? [1, 9];
+
+    const distance = Math.round((minDist + Math.random() * (maxDist - minDist)) * 10) / 10;
     const urgency = URGENCIES[Math.floor(Math.random() * URGENCIES.length)];
     const multiplier = urgency === 'express' ? 2 : urgency === 'urgent' ? 1.5 : 1;
     const reward = Math.round((3 + distance * 1.5) * multiplier * 100) / 100;
@@ -18,6 +27,7 @@ function generateOrders(playerId: string, count: number) {
 
     return {
       playerId,
+      zoneId: zone.id,
       pickupLat: 45.46 + Math.random() * 0.04,
       pickupLng: 9.17 + Math.random() * 0.04,
       dropoffLat: 45.46 + Math.random() * 0.04,
@@ -44,6 +54,8 @@ export async function runTick(playerId: string): Promise<{
     where: eq(players.id, playerId),
   });
   if (!player) throw new Error('Player not found');
+
+  const elapsedHours = (now.getTime() - player.lastTickAt.getTime()) / (1000 * 60 * 60);
 
   const playerRiders = await db.query.riders.findMany({
     where: eq(riders.playerId, playerId),
@@ -135,13 +147,50 @@ export async function runTick(playerId: string): Promise<{
   // Generate new orders from tick
   let newOrders: Order[] = [];
   if (result.newOrderCount > 0) {
-    const orderData = generateOrders(playerId, result.newOrderCount);
-    const inserted = await db.insert(orders).values(orderData).returning();
-    newOrders = inserted.map(toGameOrder);
+    // Get player's unlocked zones
+    const unlockedPZ = await db.query.playerZones.findMany({
+      where: eq(playerZones.playerId, playerId),
+    });
+    if (unlockedPZ.length > 0) {
+      const zoneIds = unlockedPZ.map((pz) => pz.zoneId);
+      const unlockedZones = await db.query.zones.findMany({
+        where: inArray(zones.id, zoneIds),
+      });
+      if (unlockedZones.length > 0) {
+        const orderData = generateOrders(playerId, result.newOrderCount, unlockedZones);
+        const inserted = await db.insert(orders).values(orderData).returning();
+        newOrders = inserted.map(toGameOrder);
+      }
+    }
   }
+
+  // Deduct zone fees
+  let zoneFees = 0;
+  if (elapsedHours > 0) {
+    const unlockedPZ = await db.query.playerZones.findMany({
+      where: eq(playerZones.playerId, playerId),
+    });
+    if (unlockedPZ.length > 0) {
+      const zoneIds = unlockedPZ.map((pz) => pz.zoneId);
+      const unlockedZones = await db.query.zones.findMany({
+        where: inArray(zones.id, zoneIds),
+      });
+      zoneFees = unlockedZones.reduce((sum, z) => sum + z.hourlyFee * elapsedHours, 0);
+      if (zoneFees > 0) {
+        await db
+          .update(players)
+          .set({ money: result.player.money - zoneFees })
+          .where(eq(players.id, playerId));
+      }
+    }
+  }
+
+  const finalPlayer =
+    zoneFees > 0 ? { ...result.player, money: result.player.money - zoneFees } : result.player;
 
   return {
     ...result,
+    player: finalPlayer,
     orders: [...result.orders, ...newOrders],
   };
 }

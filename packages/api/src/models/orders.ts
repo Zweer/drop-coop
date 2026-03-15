@@ -2,6 +2,7 @@ import { pgEnum, pgTable, real, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 import { players } from './players.ts';
 import { riders } from './riders.ts';
+import { zones } from './zones.ts';
 
 export const orderUrgencyEnum = pgEnum('order_urgency', ['normal', 'urgent', 'express']);
 
@@ -20,6 +21,7 @@ export const orders = pgTable('orders', {
     .notNull()
     .references(() => players.id),
   riderId: uuid('rider_id').references(() => riders.id),
+  zoneId: uuid('zone_id').references(() => zones.id),
   pickupLat: real('pickup_lat').notNull(),
   pickupLng: real('pickup_lng').notNull(),
   dropoffLat: real('dropoff_lat').notNull(),

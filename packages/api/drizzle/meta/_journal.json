@@ -15,6 +15,13 @@
       "when": 1773582606650,
       "tag": "0001_spicy_stature",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1773594785596,
+      "tag": "0002_lush_wallflower",
+      "breakpoints": true
     }
   ]
 }
