@@ -3,16 +3,17 @@
   import { api } from '$lib/api'
   import { Badge } from '$lib/components/ui/badge'
   import { Button } from '$lib/components/ui/button'
-  import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card'
+  import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card'
   import { usePoll, useTick } from '$lib/stores/tick.svelte'
   import { onMount } from 'svelte'
+  import { toast } from 'svelte-sonner'
 
   let riders: Record<string, unknown>[] = $state([])
   let orders: Record<string, unknown>[] = $state([])
   let allOrders: Record<string, unknown>[] = $state([])
-  let message = $state('')
   let loading = $state(true)
-  let assigning = $state(false)
+  let assigning = $state<string | null>(null)
+  let selectedRider = $state<Record<string, unknown> | null>(null)
 
   const clock = useTick()
 
@@ -33,16 +34,27 @@
 
   async function assign(orderId: string, riderId: string) {
     if (assigning) return
-    assigning = true
+    assigning = orderId
     try {
       const result = await api.orders.assign(riderId, orderId)
-      message = `✅ Assigned! ETA: ${result.estimatedMinutes} min`
+      toast.success(`Rider dispatched!`, { description: `ETA: ${result.estimatedMinutes} min` })
       await refresh()
     } catch (e) {
-      message = `❌ ${e instanceof Error ? e.message : 'Failed'}`
+      toast.error(e instanceof Error ? e.message : 'Assignment failed')
     } finally {
-      assigning = false
+      assigning = null
     }
+  }
+
+  /** Quick-assign: pick a rider, then click orders to assign. */
+  function toggleRiderSelect(rider: Record<string, unknown>) {
+    selectedRider = selectedRider?.id === rider.id ? null : rider
+  }
+
+  function quickAssign(orderId: string) {
+    if (!selectedRider) return
+    assign(orderId, selectedRider.id as string)
+    selectedRider = null
   }
 
   let idleRiders = $derived(riders.filter(r => r.status === 'idle') as Record<string, unknown>[])
@@ -70,8 +82,8 @@
   }
 
   const urgencyStyle: Record<string, { variant: 'destructive' | 'default' | 'secondary'; label: string }> = {
-    express: { variant: 'destructive', label: '🔥 Express (2x)' },
-    urgent: { variant: 'default', label: '⚡ Urgent (1.5x)' },
+    express: { variant: 'destructive', label: '🔥 Express 2x' },
+    urgent: { variant: 'default', label: '⚡ Urgent 1.5x' },
     normal: { variant: 'secondary', label: 'Normal' },
   }
 </script>
@@ -82,27 +94,40 @@
   </div>
 {:else}
 <div class="space-y-6">
-  <div class="flex items-center justify-between">
-    <div>
-      <h2 class="text-2xl font-bold">📦 Orders</h2>
-      <p class="text-sm text-muted-foreground">
-        Assign riders to orders before they expire! New orders arrive over time.
-      </p>
-    </div>
+  <div>
+    <h2 class="text-2xl font-bold">📦 Orders</h2>
+    <p class="text-sm text-muted-foreground">
+      {#if selectedRider}
+        🎯 <span class="font-medium text-primary">{selectedRider.name}</span> selected — click an order to assign.
+        <button class="underline ml-1" onclick={() => selectedRider = null}>Cancel</button>
+      {:else}
+        Pick a rider below, then click an order to dispatch.
+      {/if}
+    </p>
   </div>
 
-  {#if message}
-    <p class="text-sm p-3 rounded bg-muted">{message}</p>
-  {/if}
-
-  {#if idleRiders.length === 0 && riders.length > 0}
+  <!-- Idle riders bar -->
+  {#if idleRiders.length > 0}
+    <div class="flex flex-wrap gap-2">
+      {#each idleRiders as rider}
+        <button
+          class="flex items-center gap-2 border rounded-full px-3 py-1.5 text-sm transition-all {selectedRider?.id === rider.id ? 'bg-primary text-primary-foreground border-primary ring-2 ring-primary/30' : 'hover:bg-muted'}"
+          onclick={() => toggleRiderSelect(rider)}
+        >
+          <span>🏍️ {rider.name}</span>
+          <span class="text-xs opacity-70">⚡{rider.speed} 🔋{Number(rider.energy).toFixed(0)}%</span>
+        </button>
+      {/each}
+    </div>
+  {:else if riders.length > 0}
     <Card class="border-amber-500/20 bg-amber-500/5">
-      <CardContent class="py-4">
+      <CardContent class="py-3">
         <p class="text-sm">⏳ All riders busy. Wait or <a href="/dashboard/riders" class="underline font-medium">hire more</a>.</p>
       </CardContent>
     </Card>
   {/if}
 
+  <!-- Available orders -->
   {#if riders.length === 0}
     <Card>
       <CardContent class="py-12 text-center">
@@ -122,58 +147,35 @@
       </CardContent>
     </Card>
   {:else}
-    <div class="space-y-3">
+    <div class="space-y-2">
       {#each orders as order}
         {@const style = urgencyStyle[order.urgency as string] ?? urgencyStyle.normal}
         {@const expiresMs = new Date(order.expiresAt as string).getTime()}
-        <Card>
-          <CardContent class="py-4">
-            <div class="flex items-center justify-between gap-4">
-              <div class="flex-1">
-                <div class="flex items-center gap-2 mb-1">
-                  <span class="text-lg font-bold">€{Number(order.reward).toFixed(2)}</span>
-                  <Badge variant={style.variant}>{style.label}</Badge>
-                </div>
-                <div class="flex gap-3 text-xs">
-                  <span class="text-muted-foreground">📏 {Number(order.distance).toFixed(1)} km</span>
-                  <span class={expiryUrgency(order.expiresAt as string)}>
-                    ⏰ {formatCountdown(expiresMs)}
-                  </span>
-                </div>
-              </div>
-
-              {#if idleRiders.length > 0}
-                <select
-                  class="border rounded-md px-3 py-1.5 text-sm bg-background"
-                  onchange={(e) => {
-                    const target = e.target as HTMLSelectElement
-                    if (target.value) {
-                      assign(order.id as string, target.value)
-                      target.value = ''
-                    }
-                  }}
-                >
-                  <option value="">Assign rider...</option>
-                  {#each idleRiders as rider}
-                    <option value={rider.id}>
-                      {rider.name} (⚡{rider.speed} 🔋{Number(rider.energy).toFixed(0)}%)
-                    </option>
-                  {/each}
-                </select>
-              {:else}
-                <span class="text-xs text-muted-foreground">No idle riders</span>
-              {/if}
+        {@const isAssigning = assigning === order.id}
+        <button
+          class="w-full text-left border rounded-lg p-4 transition-all {selectedRider ? 'hover:border-primary hover:bg-primary/5 cursor-pointer' : ''} {isAssigning ? 'opacity-50' : ''}"
+          disabled={!selectedRider || !!assigning}
+          onclick={() => quickAssign(order.id as string)}
+        >
+          <div class="flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <span class="text-lg font-bold">€{Number(order.reward).toFixed(2)}</span>
+              <Badge variant={style.variant}>{style.label}</Badge>
+              <span class="text-xs text-muted-foreground">📏 {Number(order.distance).toFixed(1)} km</span>
             </div>
-          </CardContent>
-        </Card>
+            <span class="text-xs font-mono {expiryUrgency(order.expiresAt as string)}">
+              ⏰ {formatCountdown(expiresMs)}
+            </span>
+          </div>
+        </button>
       {/each}
     </div>
   {/if}
 
-  <!-- In Progress with live countdown -->
+  <!-- In Progress -->
   {#if inProgress.length > 0}
     <Card>
-      <CardHeader>
+      <CardHeader class="pb-2">
         <CardTitle class="text-base">🚴 In Progress ({inProgress.length})</CardTitle>
       </CardHeader>
       <CardContent class="space-y-2">
@@ -186,7 +188,6 @@
             <div class="flex items-center gap-3">
               <span class="text-sm font-medium">€{Number(order.reward).toFixed(2)}</span>
               <Badge variant={style.variant} class="text-xs">{style.label}</Badge>
-              <span class="text-xs text-muted-foreground">📏 {Number(order.distance).toFixed(1)} km</span>
             </div>
             <div class="text-xs text-muted-foreground">
               🏍️ {riderName(order.riderId)} · <span class="font-mono">⏱️ {formatCountdown(etaMs)}</span>
@@ -197,10 +198,10 @@
     </Card>
   {/if}
 
-  <!-- Failed deliveries -->
+  <!-- Failed -->
   {#if failed.length > 0}
     <Card class="border-red-500/20">
-      <CardHeader>
+      <CardHeader class="pb-2">
         <CardTitle class="text-base">❌ Failed ({failed.length})</CardTitle>
       </CardHeader>
       <CardContent class="space-y-2">
@@ -214,10 +215,10 @@
     </Card>
   {/if}
 
-  <!-- Recently Completed -->
+  <!-- Completed -->
   {#if completed.length > 0}
     <Card>
-      <CardHeader>
+      <CardHeader class="pb-2">
         <CardTitle class="text-base">✅ Completed ({completed.length})</CardTitle>
       </CardHeader>
       <CardContent class="space-y-2">

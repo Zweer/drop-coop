@@ -8,11 +8,11 @@
   import { getProfile } from '$lib/stores/profile.svelte'
   import { usePoll } from '$lib/stores/tick.svelte'
   import { onMount } from 'svelte'
+  import { toast } from 'svelte-sonner'
 
   let riders: Record<string, unknown>[] = $state([])
   let pool: Record<string, unknown>[] = $state([])
   let showPool = $state(false)
-  let message = $state('')
   let loading = $state(true)
   let busy = $state(false)
 
@@ -37,25 +37,25 @@
     busy = true
     try {
       await api.riders.hire(candidate)
-      message = `✅ Hired ${candidate.name}!`
+      toast.success(`${candidate.name} hired!`, { description: `Salary: €${candidate.salary}/hr` })
       await refreshRiders()
       showPool = false
     } catch (e) {
-      message = `❌ ${e instanceof Error ? e.message : 'Hire failed'}`
+      toast.error(e instanceof Error ? e.message : 'Hire failed')
     } finally {
       busy = false
     }
   }
 
-  async function upgrade(riderId: string, stat: string) {
+  async function upgrade(riderId: string, riderName: string, stat: string) {
     if (busy) return
     busy = true
     try {
       const result = await api.riders.upgrade(riderId, stat)
-      message = `✅ ${stat} upgraded to ${result.newValue}! (-€${result.cost})`
+      toast.success(`${riderName}: ${stat} → ${result.newValue}`, { description: `-€${result.cost}` })
       await refreshRiders()
     } catch (e) {
-      message = `❌ ${e instanceof Error ? e.message : 'Upgrade failed'}`
+      toast.error(e instanceof Error ? e.message : 'Upgrade failed')
     } finally {
       busy = false
     }
@@ -88,10 +88,6 @@
       {showPool ? 'Refresh pool' : 'Browse hiring pool'}
     </Button>
   </div>
-
-  {#if message}
-    <p class="text-sm p-3 rounded bg-muted">{message}</p>
-  {/if}
 
   <!-- Hiring pool -->
   {#if showPool && pool.length > 0}
@@ -154,7 +150,7 @@
                     <button
                       class="text-[10px] text-primary hover:underline disabled:opacity-50"
                       disabled={busy}
-                      onclick={() => upgrade(rider.id as string, s.key)}
+                      onclick={() => upgrade(rider.id as string, rider.name as string, s.key)}
                     >
                       ↑ €{cost}
                     </button>

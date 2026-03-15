@@ -1,5 +1,6 @@
 <script lang="ts">
   import '../app.css'
+  import { Toaster } from '$lib/components/ui/sonner'
   import { initTheme } from '$lib/stores/theme.svelte'
   import { onMount } from 'svelte'
 
@@ -9,3 +10,4 @@
 </script>
 
 {@render children?.()}
+<Toaster richColors position="bottom-right" />
