@@ -158,3 +158,5 @@ Push to GitHub → Vercel auto-deploys both API and web.
 - `DATABASE_URL` — Neon connection string (set in Vercel dashboard)
 - `JWT_SECRET` — JWT signing key
 - `STAGE` — Active hacking stage (default: 1)
+- `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` — GitHub OAuth (optional)
+- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` — Google OAuth (optional)
