@@ -200,8 +200,8 @@ Each stage adds a real security layer. Stages are selectable via config (default
 - [x] Time-based order generation (rate scales with level/reputation)
 - [x] Dark theme (light/dark/system toggle)
 - [x] Live UI (auto-refresh 15s, real-time countdowns)
-- [ ] Economy: dynamic pricing, weather bonuses
-- [ ] Events: random events affecting gameplay
+- [x] Economy: dynamic pricing, weather bonuses
+- [x] Events: random events affecting gameplay
 - [ ] Leaderboard (basic)
 - [ ] OAuth login with arctic (GitHub, Google)
 - [ ] Stage 2: JWT authentication (short expiry, refresh, hidden endpoints)

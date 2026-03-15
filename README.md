@@ -131,8 +131,8 @@ npm test             # Run tests
   - [x] Time-based order generation (rate scales with level/reputation)
   - [x] Dark theme (light/dark/system toggle)
   - [x] Live UI (auto-refresh 15s, real-time countdowns)
-  - [ ] Economy: dynamic pricing, weather bonuses
-  - [ ] Random events (storms, festivals, strikes, competitor entry)
+  - [x] Economy: dynamic pricing, weather bonuses
+  - [x] Random events (storms, festivals, closures, viral reviews, sales)
   - [ ] Leaderboard (tycoon + hacker rankings)
   - [ ] OAuth login (GitHub, Google via arctic)
   - [ ] Stage 2: JWT hardening (short expiry, refresh, hidden endpoints)
