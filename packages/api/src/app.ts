@@ -6,6 +6,7 @@ import { rateLimiter } from './middleware/rate-limit.ts';
 import auth from './routes/auth.ts';
 import eventsRoute from './routes/events.ts';
 import leaderboardRoute from './routes/leaderboard.ts';
+import oauth from './routes/oauth.ts';
 import ordersRoute from './routes/orders.ts';
 import player from './routes/player.ts';
 import ridersRoute from './routes/riders.ts';
@@ -43,6 +44,7 @@ app.use('/api/*', rateLimiter({ max: 60, windowMs: 60 * 1000 }));
 app.get('/api/health', (c) => c.json({ status: 'ok' }));
 
 app.route('/api/auth', auth);
+app.route('/api/auth', oauth);
 
 // Protected routes
 app.use('/api/*', authMiddleware);

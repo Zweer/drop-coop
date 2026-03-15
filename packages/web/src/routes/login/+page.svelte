@@ -1,16 +1,34 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
+  import { page } from '$app/stores'
   import { api, setToken } from '$lib/api'
   import { Button } from '$lib/components/ui/button'
   import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card'
   import { Input } from '$lib/components/ui/input'
   import { Label } from '$lib/components/ui/label'
+  import { onMount } from 'svelte'
 
   let isLogin = $state(true)
   let username = $state('')
   let password = $state('')
   let error = $state('')
   let loading = $state(false)
+
+  onMount(() => {
+    // Handle OAuth callback — token passed via URL
+    const params = new URLSearchParams($page.url.search)
+    const token = params.get('token')
+    const oauthError = params.get('error')
+
+    if (token) {
+      setToken(token)
+      goto('/dashboard')
+      return
+    }
+    if (oauthError) {
+      error = oauthError === 'invalid_state' ? 'OAuth session expired, try again' : 'OAuth login failed'
+    }
+  })
 
   async function handleSubmit() {
     error = ''
@@ -36,7 +54,27 @@
         {isLogin ? 'Sign in to your co-op' : 'Start your delivery co-op'}
       </CardDescription>
     </CardHeader>
-    <CardContent>
+    <CardContent class="space-y-4">
+      <!-- OAuth buttons -->
+      <div class="space-y-2">
+        <Button variant="outline" class="w-full" href="/api/auth/github">
+          🐙 Continue with GitHub
+        </Button>
+        <Button variant="outline" class="w-full" href="/api/auth/google">
+          🔍 Continue with Google
+        </Button>
+      </div>
+
+      <div class="relative">
+        <div class="absolute inset-0 flex items-center">
+          <span class="w-full border-t"></span>
+        </div>
+        <div class="relative flex justify-center text-xs uppercase">
+          <span class="bg-card px-2 text-muted-foreground">or</span>
+        </div>
+      </div>
+
+      <!-- Username/password form -->
       <form onsubmit={handleSubmit} class="space-y-4">
         <div class="space-y-2">
           <Label for="username">Username</Label>

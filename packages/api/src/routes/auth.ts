@@ -37,7 +37,7 @@ function extractSalt(stored: string): string {
   return stored.split('$')[0];
 }
 
-async function createToken(playerId: string): Promise<string> {
+export async function createToken(playerId: string): Promise<string> {
   return new SignJWT({ sub: playerId })
     .setProtectedHeader({ alg: 'HS256' })
     .setExpirationTime(TOKEN_EXPIRY)
@@ -83,6 +83,7 @@ auth.post('/login', async (c) => {
     where: eq(players.username, username),
   });
   if (!player) return c.json({ error: 'Invalid credentials' }, 401);
+  if (!player.passwordHash) return c.json({ error: 'Use OAuth to login' }, 400);
 
   const passwordHash = await hashPassword(password, extractSalt(player.passwordHash));
   if (player.passwordHash !== passwordHash) {

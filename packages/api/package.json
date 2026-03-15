@@ -38,6 +38,7 @@
     "@drop-coop/game": "*",
     "@hono/node-server": "^1.14.0",
     "@neondatabase/serverless": "^1.0.0",
+    "arctic": "^3.7.0",
     "drizzle-orm": "^0.44.0",
     "hono": "^4.7.0",
     "jose": "^6.0.0",
