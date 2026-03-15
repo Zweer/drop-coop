@@ -1,15 +1,41 @@
 import * as arctic from 'arctic';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { getCookie, setCookie } from 'hono/cookie';
 
 import { db } from '../db/index.ts';
-import { players } from '../models/index.ts';
+import { authAccounts, players } from '../models/index.ts';
 import { createToken } from './auth.ts';
 
 function getBaseUrl(c: { req: { url: string } }): string {
   const url = new URL(c.req.url);
   return `${url.protocol}//${url.host}`;
+}
+
+/** Find player by OAuth provider, or create a new one. */
+async function findOrCreateOAuthPlayer(
+  type: 'github' | 'google',
+  providerId: string,
+  suggestedUsername: string,
+): Promise<string> {
+  // Check if this OAuth account already exists
+  const existing = await db.query.authAccounts.findFirst({
+    where: and(eq(authAccounts.type, type), eq(authAccounts.providerId, providerId)),
+  });
+  if (existing) return existing.playerId;
+
+  // Create new player
+  let username = suggestedUsername;
+  const taken = await db.query.players.findFirst({
+    where: eq(players.username, username),
+  });
+  if (taken) username = `${username}_${type.charAt(0)}`;
+
+  const [player] = await db.insert(players).values({ username }).returning();
+
+  await db.insert(authAccounts).values({ playerId: player.id, type, providerId });
+
+  return player.id;
 }
 
 // --- GitHub ---
@@ -55,32 +81,13 @@ oauth.get('/github/callback', async (c) => {
 
   try {
     const tokens = await github.validateAuthorizationCode(code);
-    const accessToken = tokens.accessToken();
-
     const res = await fetch('https://api.github.com/user', {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: { Authorization: `Bearer ${tokens.accessToken()}` },
     });
     const ghUser = (await res.json()) as { id: number; login: string };
 
-    const githubId = String(ghUser.id);
-
-    // Find or create player
-    let player = await db.query.players.findFirst({
-      where: eq(players.githubId, githubId),
-    });
-
-    if (!player) {
-      // Check username collision, append suffix if needed
-      let username = ghUser.login;
-      const existing = await db.query.players.findFirst({
-        where: eq(players.username, username),
-      });
-      if (existing) username = `${username}_gh`;
-
-      [player] = await db.insert(players).values({ username, githubId }).returning();
-    }
-
-    const token = await createToken(player.id);
+    const playerId = await findOrCreateOAuthPlayer('github', String(ghUser.id), ghUser.login);
+    const token = await createToken(playerId);
     return c.redirect(`/login?token=${token}`);
   } catch {
     return c.redirect('/login?error=oauth_failed');
@@ -104,20 +111,15 @@ oauth.get('/google', (c) => {
   const codeVerifier = arctic.generateCodeVerifier();
   const url = google.createAuthorizationURL(state, codeVerifier, ['openid', 'profile']);
 
-  setCookie(c, 'google_oauth_state', state, {
+  const cookieOpts = {
     path: '/',
     httpOnly: true,
     secure: !c.req.url.includes('localhost'),
     maxAge: 600,
-    sameSite: 'Lax',
-  });
-  setCookie(c, 'google_code_verifier', codeVerifier, {
-    path: '/',
-    httpOnly: true,
-    secure: !c.req.url.includes('localhost'),
-    maxAge: 600,
-    sameSite: 'Lax',
-  });
+    sameSite: 'Lax' as const,
+  };
+  setCookie(c, 'google_oauth_state', state, cookieOpts);
+  setCookie(c, 'google_code_verifier', codeVerifier, cookieOpts);
 
   return c.redirect(url.toString());
 });
@@ -137,27 +139,12 @@ oauth.get('/google/callback', async (c) => {
 
   try {
     const tokens = await google.validateAuthorizationCode(code, codeVerifier);
-    const idToken = tokens.idToken();
-    const claims = arctic.decodeIdToken(idToken) as { sub: string; name?: string };
+    const claims = arctic.decodeIdToken(tokens.idToken()) as { sub: string; name?: string };
 
-    const googleId = claims.sub;
-
-    let player = await db.query.players.findFirst({
-      where: eq(players.googleId, googleId),
-    });
-
-    if (!player) {
-      let username =
-        claims.name?.replace(/\s+/g, '_').toLowerCase() ?? `player_${googleId.slice(0, 8)}`;
-      const existing = await db.query.players.findFirst({
-        where: eq(players.username, username),
-      });
-      if (existing) username = `${username}_g`;
-
-      [player] = await db.insert(players).values({ username, googleId }).returning();
-    }
-
-    const token = await createToken(player.id);
+    const username =
+      claims.name?.replace(/\s+/g, '_').toLowerCase() ?? `player_${claims.sub.slice(0, 8)}`;
+    const playerId = await findOrCreateOAuthPlayer('google', claims.sub, username);
+    const token = await createToken(playerId);
     return c.redirect(`/login?token=${token}`);
   } catch {
     return c.redirect('/login?error=oauth_failed');

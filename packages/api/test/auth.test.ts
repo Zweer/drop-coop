@@ -25,7 +25,9 @@ describe('POST /api/auth/register', () => {
 
   it('should register a new player', async () => {
     mockDb.query.players.findFirst.mockResolvedValueOnce(undefined);
-    mockDb.insert.mockReturnValueOnce(mockInsertReturning([{ id: 'p1', username: 'testuser' }]));
+    mockDb.insert
+      .mockReturnValueOnce(mockInsertReturning([{ id: 'p1', username: 'testuser' }]))
+      .mockReturnValueOnce(mockInsertReturning([{ id: 'a1' }])); // auth_account
 
     const res = await post('/api/auth/register', { username: 'testuser', password: 'secret123' });
 
@@ -60,10 +62,11 @@ describe('POST /api/auth/login', () => {
   it('should login with correct credentials', async () => {
     const stored = await hashPassword('secret123');
 
-    mockDb.query.players.findFirst.mockResolvedValueOnce({
-      id: 'p1',
-      username: 'testuser',
-      passwordHash: stored,
+    mockDb.query.players.findFirst.mockResolvedValueOnce({ id: 'p1', username: 'testuser' });
+    mockDb.query.authAccounts.findFirst.mockResolvedValueOnce({
+      playerId: 'p1',
+      type: 'password',
+      credential: stored,
     });
 
     const res = await post('/api/auth/login', { username: 'testuser', password: 'secret123' });
@@ -77,10 +80,11 @@ describe('POST /api/auth/login', () => {
   it('should reject wrong password', async () => {
     const stored = await hashPassword('correct-password');
 
-    mockDb.query.players.findFirst.mockResolvedValueOnce({
-      id: 'p1',
-      username: 'testuser',
-      passwordHash: stored,
+    mockDb.query.players.findFirst.mockResolvedValueOnce({ id: 'p1', username: 'testuser' });
+    mockDb.query.authAccounts.findFirst.mockResolvedValueOnce({
+      playerId: 'p1',
+      type: 'password',
+      credential: stored,
     });
 
     const res = await post('/api/auth/login', { username: 'testuser', password: 'wrongpassword' });

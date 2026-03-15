@@ -1,10 +1,10 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { jwtVerify, SignJWT } from 'jose';
 import { z } from 'zod';
 
 import { db } from '../db/index.ts';
-import { players } from '../models/index.ts';
+import { authAccounts, players } from '../models/index.ts';
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'dev-secret');
 const TOKEN_EXPIRY = '24h';
@@ -57,7 +57,6 @@ auth.post('/register', async (c) => {
   if (!body.success) return c.json({ error: body.error.flatten() }, 400);
 
   const { username, password } = body.data;
-  const passwordHash = await hashPassword(password);
 
   const existing = await db.query.players.findFirst({
     where: eq(players.username, username),
@@ -66,8 +65,16 @@ auth.post('/register', async (c) => {
 
   const [player] = await db
     .insert(players)
-    .values({ username, passwordHash })
+    .values({ username })
     .returning({ id: players.id, username: players.username });
+
+  const passwordHash = await hashPassword(password);
+  await db.insert(authAccounts).values({
+    playerId: player.id,
+    type: 'password',
+    providerId: player.id,
+    credential: passwordHash,
+  });
 
   const token = await createToken(player.id);
   return c.json({ token, player }, 201);
@@ -83,10 +90,14 @@ auth.post('/login', async (c) => {
     where: eq(players.username, username),
   });
   if (!player) return c.json({ error: 'Invalid credentials' }, 401);
-  if (!player.passwordHash) return c.json({ error: 'Use OAuth to login' }, 400);
 
-  const passwordHash = await hashPassword(password, extractSalt(player.passwordHash));
-  if (player.passwordHash !== passwordHash) {
+  const account = await db.query.authAccounts.findFirst({
+    where: and(eq(authAccounts.playerId, player.id), eq(authAccounts.type, 'password')),
+  });
+  if (!account?.credential) return c.json({ error: 'Use OAuth to login' }, 400);
+
+  const passwordHash = await hashPassword(password, extractSalt(account.credential));
+  if (account.credential !== passwordHash) {
     return c.json({ error: 'Invalid credentials' }, 401);
   }
 

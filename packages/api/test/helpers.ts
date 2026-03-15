@@ -34,6 +34,7 @@ export function createMockDb() {
       riders: { findFirst: vi.fn(), findMany: vi.fn() },
       orders: { findFirst: vi.fn(), findMany: vi.fn() },
       events: { findFirst: vi.fn(), findMany: vi.fn() },
+      authAccounts: { findFirst: vi.fn(), findMany: vi.fn() },
       playerZones: { findFirst: vi.fn(), findMany: vi.fn() },
       zones: { findFirst: vi.fn(), findMany: vi.fn() },
     },

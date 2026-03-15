@@ -3,9 +3,6 @@ import { integer, pgTable, real, text, timestamp, uuid } from 'drizzle-orm/pg-co
 export const players = pgTable('players', {
   id: uuid('id').primaryKey().defaultRandom(),
   username: text('username').notNull().unique(),
-  passwordHash: text('password_hash'),
-  githubId: text('github_id').unique(),
-  googleId: text('google_id').unique(),
   money: real('money').notNull().default(500),
   reputation: real('reputation').notNull().default(50),
   level: integer('level').notNull().default(1),
