@@ -5,6 +5,7 @@
   import { Button } from '$lib/components/ui/button'
   import { Progress } from '$lib/components/ui/progress'
   import { getProfile, setProfile } from '$lib/stores/profile.svelte'
+  import { getTheme, setTheme } from '$lib/stores/theme.svelte'
   import { onMount } from 'svelte'
 
   let { children } = $props()
@@ -34,6 +35,13 @@
     { href: '/dashboard/orders', label: '📦 Orders' },
   ]
 
+  const themeIcons: Record<string, string> = { light: '☀️', dark: '🌙', system: '💻' }
+  const themeOrder: Array<'light' | 'dark' | 'system'> = ['system', 'light', 'dark']
+
+  function cycleTheme() {
+    const idx = themeOrder.indexOf(getTheme())
+    setTheme(themeOrder[(idx + 1) % themeOrder.length])
+  }
   let progression = $derived(getProfile()?.progression as Record<string, unknown> | undefined)
   let nextMilestone = $derived(progression?.nextMilestone as Record<string, unknown> | undefined)
 </script>
@@ -69,6 +77,9 @@
             </div>
           {/if}
         </div>
+        <Button variant="ghost" size="sm" onclick={cycleTheme} title={getTheme()}>
+          {themeIcons[getTheme()]}
+        </Button>
         <Button variant="ghost" size="sm" onclick={logout}>Logout</Button>
       </div>
     </header>
