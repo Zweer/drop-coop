@@ -6,11 +6,16 @@ const mockDb = createMockDb();
 vi.mock('../src/db/index.ts', () => ({ db: mockDb }));
 
 const { default: app } = await import('../src/app.ts');
+const { hashPassword } = await import('../src/routes/auth.ts');
 
+let reqId = 0;
 function post(path: string, body: unknown) {
   return app.request(path, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Forwarded-For': `test-${++reqId}`,
+    },
     body: JSON.stringify(body),
   });
 }
@@ -53,14 +58,12 @@ describe('POST /api/auth/login', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('should login with correct credentials', async () => {
-    const hash = Buffer.from(
-      await crypto.subtle.digest('SHA-256', new TextEncoder().encode('secret123')),
-    ).toString('hex');
+    const stored = await hashPassword('secret123');
 
     mockDb.query.players.findFirst.mockResolvedValueOnce({
       id: 'p1',
       username: 'testuser',
-      passwordHash: hash,
+      passwordHash: stored,
     });
 
     const res = await post('/api/auth/login', { username: 'testuser', password: 'secret123' });
@@ -72,13 +75,15 @@ describe('POST /api/auth/login', () => {
   });
 
   it('should reject wrong password', async () => {
+    const stored = await hashPassword('correct-password');
+
     mockDb.query.players.findFirst.mockResolvedValueOnce({
       id: 'p1',
       username: 'testuser',
-      passwordHash: 'wronghash',
+      passwordHash: stored,
     });
 
-    const res = await post('/api/auth/login', { username: 'testuser', password: 'secret123' });
+    const res = await post('/api/auth/login', { username: 'testuser', password: 'wrongpassword' });
 
     expect(res.status).toBe(401);
   });

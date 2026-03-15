@@ -16,10 +16,25 @@ const registerSchema = z.object({
 
 const loginSchema = registerSchema;
 
-async function hashPassword(password: string): Promise<string> {
-  const data = new TextEncoder().encode(password);
-  const hash = await crypto.subtle.digest('SHA-256', data);
-  return Buffer.from(hash).toString('hex');
+export async function hashPassword(password: string, salt?: string): Promise<string> {
+  const s = salt ?? Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString('hex');
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(password),
+    'PBKDF2',
+    false,
+    ['deriveBits'],
+  );
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt: new TextEncoder().encode(s), iterations: 100_000, hash: 'SHA-256' },
+    key,
+    256,
+  );
+  return `${s}$${Buffer.from(bits).toString('hex')}`;
+}
+
+function extractSalt(stored: string): string {
+  return stored.split('$')[0];
 }
 
 async function createToken(playerId: string): Promise<string> {
@@ -63,12 +78,14 @@ auth.post('/login', async (c) => {
   if (!body.success) return c.json({ error: body.error.flatten() }, 400);
 
   const { username, password } = body.data;
-  const passwordHash = await hashPassword(password);
 
   const player = await db.query.players.findFirst({
     where: eq(players.username, username),
   });
-  if (!player || player.passwordHash !== passwordHash) {
+  if (!player) return c.json({ error: 'Invalid credentials' }, 401);
+
+  const passwordHash = await hashPassword(password, extractSalt(player.passwordHash));
+  if (player.passwordHash !== passwordHash) {
     return c.json({ error: 'Invalid credentials' }, 401);
   }
 

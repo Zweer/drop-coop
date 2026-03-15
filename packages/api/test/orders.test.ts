@@ -25,13 +25,19 @@ beforeEach(async () => {
 });
 
 function get(path: string) {
-  return app.request(path, { headers: { Authorization: authHeader } });
+  return app.request(path, {
+    headers: { Authorization: authHeader, 'X-Forwarded-For': 'test-orders' },
+  });
 }
 
 function post(path: string, body: unknown) {
   return app.request(path, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: authHeader },
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: authHeader,
+      'X-Forwarded-For': 'test-orders',
+    },
     body: JSON.stringify(body),
   });
 }
