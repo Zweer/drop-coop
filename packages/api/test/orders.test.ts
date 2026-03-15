@@ -11,6 +11,7 @@ vi.mock('../src/services/tick.ts', () => ({
     orders: [],
     revenue: 0,
     costs: 0,
+    newOrderCount: 0,
   }),
 }));
 

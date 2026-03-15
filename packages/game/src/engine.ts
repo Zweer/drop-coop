@@ -1,7 +1,18 @@
-import { calculateDeliveryMinutes, calculateRevenue, calculateSalaryCost } from './economy.js';
+import {
+  calculateDeliveryMinutes,
+  calculateFailureChance,
+  calculateMaxOrders,
+  calculateOrderRate,
+  calculateRevenue,
+  calculateSalaryCost,
+  seededRandom,
+} from './economy.js';
+import { calculateLevel } from './progression.js';
 import type { Order, Player, Rider } from './types.js';
 
 const ENERGY_REGEN_PER_HOUR = 10;
+const REPUTATION_PER_DELIVERY = 0.5;
+const REPUTATION_PER_FAILURE = -2;
 
 export interface TickResult {
   player: Player;
@@ -9,6 +20,9 @@ export interface TickResult {
   orders: Order[];
   revenue: number;
   costs: number;
+  failedDeliveries: number;
+  /** How many new orders the API layer should generate and insert. */
+  newOrderCount: number;
 }
 
 /**
@@ -22,12 +36,14 @@ export function processTick(
   now: Date,
 ): TickResult {
   const elapsedMs = now.getTime() - player.lastTickAt.getTime();
-  if (elapsedMs <= 0) return { player, riders, orders, revenue: 0, costs: 0 };
+  if (elapsedMs <= 0)
+    return { player, riders, orders, revenue: 0, costs: 0, failedDeliveries: 0, newOrderCount: 0 };
 
   const elapsedHours = elapsedMs / (1000 * 60 * 60);
   let revenue = 0;
+  let failedDeliveries = 0;
 
-  // 1. Complete deliveries whose time has elapsed
+  // 1. Complete or fail deliveries whose time has elapsed
   const updatedOrders = orders.map((order) => {
     if (order.status !== 'assigned' || !order.assignedAt) return order;
 
@@ -38,6 +54,15 @@ export function processTick(
     const doneAt = new Date(order.assignedAt.getTime() + deliveryMinutes * 60 * 1000);
 
     if (now >= doneAt) {
+      // Deterministic failure check based on order id
+      const failChance = calculateFailureChance(rider);
+      const roll = seededRandom(order.id);
+
+      if (roll < failChance) {
+        failedDeliveries++;
+        return { ...order, status: 'failed' as const, deliveredAt: doneAt };
+      }
+
       revenue += calculateRevenue(order);
       return { ...order, status: 'delivered' as const, deliveredAt: doneAt };
     }
@@ -52,9 +77,11 @@ export function processTick(
     return order;
   });
 
-  // 3. Free up riders whose deliveries completed
-  const deliveredRiderIds = new Set(
-    finalOrders.filter((o) => o.status === 'delivered' && o.deliveredAt).map((o) => o.riderId),
+  // 3. Free up riders whose deliveries completed or failed
+  const doneRiderIds = new Set(
+    finalOrders
+      .filter((o) => (o.status === 'delivered' || o.status === 'failed') && o.deliveredAt)
+      .map((o) => o.riderId),
   );
 
   // 4. Regenerate energy + update rider status
@@ -62,7 +89,7 @@ export function processTick(
     const energyRegen =
       rider.status === 'resting' ? ENERGY_REGEN_PER_HOUR * 2 : ENERGY_REGEN_PER_HOUR;
     const newEnergy = Math.min(100, rider.energy + energyRegen * elapsedHours);
-    const newStatus = deliveredRiderIds.has(rider.id) ? ('idle' as const) : rider.status;
+    const newStatus = doneRiderIds.has(rider.id) ? ('idle' as const) : rider.status;
     return { ...rider, energy: newEnergy, status: newStatus };
   });
 
@@ -74,13 +101,31 @@ export function processTick(
     (o) => o.status === 'delivered' && o.deliveredAt && o.deliveredAt > player.lastTickAt,
   ).length;
 
+  const newTotalDeliveries = player.totalDeliveries + completedCount;
+
   const updatedPlayer: Player = {
     ...player,
     money: player.money + revenue - costs,
-    totalDeliveries: player.totalDeliveries + completedCount,
+    reputation: Math.max(
+      0,
+      Math.min(
+        100,
+        player.reputation +
+          completedCount * REPUTATION_PER_DELIVERY +
+          failedDeliveries * REPUTATION_PER_FAILURE,
+      ),
+    ),
+    level: calculateLevel(newTotalDeliveries),
+    totalDeliveries: newTotalDeliveries,
     totalProfit: player.totalProfit + revenue - costs,
     lastTickAt: now,
   };
+
+  // 7. Calculate new orders to generate
+  const availableCount = finalOrders.filter((o) => o.status === 'available').length;
+  const maxOrders = calculateMaxOrders(player);
+  const couldArrive = Math.floor(calculateOrderRate(player) * elapsedHours);
+  const newOrderCount = Math.max(0, Math.min(couldArrive, maxOrders - availableCount));
 
   return {
     player: updatedPlayer,
@@ -88,5 +133,7 @@ export function processTick(
     orders: finalOrders,
     revenue,
     costs,
+    failedDeliveries,
+    newOrderCount,
   };
 }

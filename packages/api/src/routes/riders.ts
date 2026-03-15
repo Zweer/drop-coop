@@ -1,4 +1,5 @@
-import { eq } from 'drizzle-orm';
+import { calculateUpgradeCost, isUpgradeableStat } from '@drop-coop/game';
+import { and, eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { z } from 'zod';
 
@@ -99,6 +100,59 @@ ridersRoute.post('/hire', async (c) => {
     .returning();
 
   return c.json(rider, 201);
+});
+
+const REQUIRED_LEVEL = 5;
+const MAX_STAT = 10;
+
+const upgradeSchema = z.object({
+  stat: z.string(),
+});
+
+ridersRoute.post('/:id/upgrade', async (c) => {
+  const playerId = c.get('playerId');
+  const riderId = c.req.param('id');
+  const body = upgradeSchema.safeParse(await c.req.json());
+  if (!body.success) return c.json({ error: body.error.flatten() }, 400);
+
+  const { stat } = body.data;
+  if (!isUpgradeableStat(stat)) return c.json({ error: 'Invalid stat' }, 400);
+
+  const player = await db.query.players.findFirst({
+    where: eq(players.id, playerId),
+  });
+  if (!player) return c.json({ error: 'Player not found' }, 404);
+  if (player.level < REQUIRED_LEVEL)
+    return c.json({ error: `Requires level ${REQUIRED_LEVEL}` }, 403);
+
+  const rider = await db.query.riders.findFirst({
+    where: and(eq(riders.id, riderId), eq(riders.playerId, playerId)),
+  });
+  if (!rider) return c.json({ error: 'Rider not found' }, 404);
+
+  const currentValue = rider[stat];
+  if (currentValue >= MAX_STAT) return c.json({ error: 'Stat already at max' }, 400);
+
+  const cost = calculateUpgradeCost(currentValue);
+  if (player.money < cost) return c.json({ error: 'Not enough money' }, 400);
+
+  await db
+    .update(players)
+    .set({ money: player.money - cost })
+    .where(eq(players.id, playerId));
+
+  await db
+    .update(riders)
+    .set({ [stat]: currentValue + 1 })
+    .where(eq(riders.id, riderId));
+
+  return c.json({
+    riderId,
+    stat,
+    oldValue: currentValue,
+    newValue: currentValue + 1,
+    cost,
+  });
 });
 
 export default ridersRoute;

@@ -1,9 +1,12 @@
 <script lang="ts">
+  import { calculateUpgradeCost } from '@drop-coop/game'
   import { api } from '$lib/api'
   import { Badge } from '$lib/components/ui/badge'
   import { Button } from '$lib/components/ui/button'
   import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card'
   import { Progress } from '$lib/components/ui/progress'
+  import { getProfile } from '$lib/stores/profile.svelte'
+  import { usePoll } from '$lib/stores/tick.svelte'
   import { onMount } from 'svelte'
 
   let riders: Record<string, unknown>[] = $state([])
@@ -11,12 +14,18 @@
   let showPool = $state(false)
   let message = $state('')
   let loading = $state(true)
-  let hiring = $state(false)
+  let busy = $state(false)
+
+  async function refreshRiders() {
+    riders = await api.riders.list()
+  }
 
   onMount(async () => {
-    riders = await api.riders.list()
+    await refreshRiders()
     loading = false
   })
+
+  usePoll(refreshRiders, 15_000)
 
   async function openPool() {
     pool = await api.riders.pool()
@@ -24,20 +33,42 @@
   }
 
   async function hire(candidate: Record<string, unknown>) {
-    if (hiring) return
-    hiring = true
+    if (busy) return
+    busy = true
     try {
       await api.riders.hire(candidate)
       message = `✅ Hired ${candidate.name}!`
-      riders = await api.riders.list()
+      await refreshRiders()
       showPool = false
-      pool = []
     } catch (e) {
       message = `❌ ${e instanceof Error ? e.message : 'Hire failed'}`
     } finally {
-      hiring = false
+      busy = false
     }
   }
+
+  async function upgrade(riderId: string, stat: string) {
+    if (busy) return
+    busy = true
+    try {
+      const result = await api.riders.upgrade(riderId, stat)
+      message = `✅ ${stat} upgraded to ${result.newValue}! (-€${result.cost})`
+      await refreshRiders()
+    } catch (e) {
+      message = `❌ ${e instanceof Error ? e.message : 'Upgrade failed'}`
+    } finally {
+      busy = false
+    }
+  }
+
+  let canUpgrade = $derived(Number(getProfile()?.level) >= 5)
+
+  const stats = [
+    { key: 'speed', icon: '⚡', label: 'Speed' },
+    { key: 'reliability', icon: '🎯', label: 'Reliability' },
+    { key: 'cityKnowledge', icon: '🗺️', label: 'Knowledge' },
+    { key: 'stamina', icon: '💪', label: 'Stamina' },
+  ]
 </script>
 
 {#if loading}
@@ -49,7 +80,9 @@
   <div class="flex items-center justify-between">
     <div>
       <h2 class="text-2xl font-bold">🏍️ Riders</h2>
-      <p class="text-sm text-muted-foreground">Manage your delivery fleet. Hire riders, track their energy and status.</p>
+      <p class="text-sm text-muted-foreground">
+        Manage your fleet. {canUpgrade ? 'Click stats to upgrade them!' : `Upgrades unlock at level 5.`}
+      </p>
     </div>
     <Button onclick={openPool}>
       {showPool ? 'Refresh pool' : 'Browse hiring pool'}
@@ -65,7 +98,7 @@
     <Card class="border-dashed">
       <CardHeader>
         <CardTitle class="text-base">📋 Hiring Pool</CardTitle>
-        <CardDescription>Pick a rider to join your co-op. Better stats = higher cost.</CardDescription>
+        <CardDescription>Better stats = higher cost and salary.</CardDescription>
       </CardHeader>
       <CardContent class="space-y-3">
         {#each pool as candidate}
@@ -73,15 +106,15 @@
             <div class="space-y-1">
               <p class="font-medium">{candidate.name}</p>
               <div class="flex gap-3 text-xs text-muted-foreground">
-                <span title="Speed — faster deliveries">⚡ Speed {candidate.speed}</span>
-                <span title="Reliability — fewer failed deliveries">🎯 Reliability {candidate.reliability}</span>
-                <span title="City Knowledge — shorter routes">🗺️ Knowledge {candidate.cityKnowledge}</span>
-                <span title="Stamina — less energy drain">💪 Stamina {candidate.stamina}</span>
+                <span>⚡ {candidate.speed}</span>
+                <span>🎯 {candidate.reliability}</span>
+                <span>🗺️ {candidate.cityKnowledge}</span>
+                <span>💪 {candidate.stamina}</span>
               </div>
               <p class="text-xs text-muted-foreground">Salary: €{candidate.salary}/hr</p>
             </div>
-            <Button onclick={() => hire(candidate)} disabled={hiring}>
-              {hiring ? '...' : `Hire for €${candidate.hireCost}`}
+            <Button onclick={() => hire(candidate)} disabled={busy}>
+              Hire €{candidate.hireCost}
             </Button>
           </div>
         {/each}
@@ -95,7 +128,7 @@
       <CardContent class="py-12 text-center">
         <p class="text-4xl mb-3">🏍️</p>
         <p class="font-medium">No riders yet</p>
-        <p class="text-sm text-muted-foreground mt-1">Hire your first rider from the pool above to start delivering orders.</p>
+        <p class="text-sm text-muted-foreground mt-1">Hire from the pool above to start.</p>
       </CardContent>
     </Card>
   {:else}
@@ -111,22 +144,25 @@
             </div>
 
             <div class="grid grid-cols-4 gap-2 text-center">
-              <div>
-                <p class="text-xs text-muted-foreground">Speed</p>
-                <p class="font-bold">⚡ {rider.speed}</p>
-              </div>
-              <div>
-                <p class="text-xs text-muted-foreground">Reliability</p>
-                <p class="font-bold">🎯 {rider.reliability}</p>
-              </div>
-              <div>
-                <p class="text-xs text-muted-foreground">Knowledge</p>
-                <p class="font-bold">🗺️ {rider.cityKnowledge}</p>
-              </div>
-              <div>
-                <p class="text-xs text-muted-foreground">Stamina</p>
-                <p class="font-bold">💪 {rider.stamina}</p>
-              </div>
+              {#each stats as s}
+                {@const val = Number(rider[s.key])}
+                {@const cost = calculateUpgradeCost(val)}
+                <div>
+                  <p class="text-xs text-muted-foreground">{s.label}</p>
+                  <p class="font-bold">{s.icon} {val}</p>
+                  {#if canUpgrade && val < 10}
+                    <button
+                      class="text-[10px] text-primary hover:underline disabled:opacity-50"
+                      disabled={busy}
+                      onclick={() => upgrade(rider.id as string, s.key)}
+                    >
+                      ↑ €{cost}
+                    </button>
+                  {:else if val >= 10}
+                    <span class="text-[10px] text-green-600">MAX</span>
+                  {/if}
+                </div>
+              {/each}
             </div>
 
             <div class="space-y-1">

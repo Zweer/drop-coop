@@ -60,6 +60,11 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(rider),
       }),
+    upgrade: (riderId: string, stat: string) =>
+      request<Record<string, unknown>>(`/riders/${riderId}/upgrade`, {
+        method: 'POST',
+        body: JSON.stringify({ stat }),
+      }),
   },
   orders: {
     list: () => request<Record<string, unknown>[]>('/orders'),

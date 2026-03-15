@@ -1,9 +1,34 @@
-import type { Order, Player, Rider } from '@drop-coop/game';
+import type { Order, OrderUrgency, Player, Rider } from '@drop-coop/game';
 import { processTick } from '@drop-coop/game';
 import { and, eq, inArray } from 'drizzle-orm';
 
 import { db } from '../db/index.ts';
 import { orders, players, riders } from '../models/index.ts';
+
+const URGENCIES: OrderUrgency[] = ['normal', 'normal', 'normal', 'urgent', 'express'];
+
+function generateOrders(playerId: string, count: number) {
+  const now = new Date();
+  return Array.from({ length: count }, () => {
+    const distance = Math.round((Math.random() * 8 + 1) * 10) / 10;
+    const urgency = URGENCIES[Math.floor(Math.random() * URGENCIES.length)];
+    const multiplier = urgency === 'express' ? 2 : urgency === 'urgent' ? 1.5 : 1;
+    const reward = Math.round((3 + distance * 1.5) * multiplier * 100) / 100;
+    const expiresAt = new Date(now.getTime() + (15 + Math.random() * 30) * 60 * 1000);
+
+    return {
+      playerId,
+      pickupLat: 45.46 + Math.random() * 0.04,
+      pickupLng: 9.17 + Math.random() * 0.04,
+      dropoffLat: 45.46 + Math.random() * 0.04,
+      dropoffLng: 9.17 + Math.random() * 0.04,
+      distance,
+      urgency,
+      reward,
+      expiresAt,
+    };
+  });
+}
 
 /** Run lazy tick for a player: compute elapsed game state and persist to DB. */
 export async function runTick(playerId: string): Promise<{
@@ -77,6 +102,8 @@ export async function runTick(playerId: string): Promise<{
     .update(players)
     .set({
       money: result.player.money,
+      reputation: result.player.reputation,
+      level: result.player.level,
       totalDeliveries: result.player.totalDeliveries,
       totalProfit: result.player.totalProfit,
       lastTickAt: now,
@@ -105,5 +132,16 @@ export async function runTick(playerId: string): Promise<{
     }
   }
 
-  return result;
+  // Generate new orders from tick
+  let newOrders: Order[] = [];
+  if (result.newOrderCount > 0) {
+    const orderData = generateOrders(playerId, result.newOrderCount);
+    const inserted = await db.insert(orders).values(orderData).returning();
+    newOrders = inserted.map(toGameOrder);
+  }
+
+  return {
+    ...result,
+    orders: [...result.orders, ...newOrders],
+  };
 }

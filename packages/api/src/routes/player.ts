@@ -1,3 +1,4 @@
+import { getProgression } from '@drop-coop/game';
 import { Hono } from 'hono';
 
 import { runTick } from '../services/tick.ts';
@@ -7,12 +8,13 @@ const player = new Hono<AppEnv>();
 
 player.get('/profile', async (c) => {
   const playerId = c.get('playerId');
-  const { player, riders, revenue, costs } = await runTick(playerId);
+  const { player, riders, revenue, costs, failedDeliveries } = await runTick(playerId);
 
   return c.json({
     ...player,
     riderCount: riders.length,
-    lastTick: { revenue, costs },
+    progression: getProgression(player),
+    lastTick: { revenue, costs, failedDeliveries },
   });
 });
 

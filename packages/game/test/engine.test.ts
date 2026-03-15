@@ -57,6 +57,7 @@ describe('processTick', () => {
 
     expect(result.revenue).toBe(0);
     expect(result.costs).toBe(0);
+    expect(result.newOrderCount).toBe(0);
     expect(result.player.money).toBe(500);
   });
 
@@ -269,5 +270,166 @@ describe('processTick', () => {
     const result = processTick(player, riders, orders, now);
 
     expect(result.player.totalProfit).toBe(105.5); // 100 + 10.5 - 5
+  });
+});
+
+describe('processTick — order generation', () => {
+  it('should generate new orders based on elapsed time', () => {
+    const player = makePlayer(); // level 1, reputation 50
+    const now = new Date('2026-01-01T13:00:00Z'); // 1 hour later
+
+    const result = processTick(player, [], [], now);
+
+    // orderRate = (2 + 1*0.5) * (1 + 50/100) = 2.5 * 1.5 = 3.75 → floor = 3
+    // maxOrders = 5 + 1 = 6, available = 0 → min(3, 6) = 3
+    expect(result.newOrderCount).toBe(3);
+  });
+
+  it('should not exceed max available orders', () => {
+    const player = makePlayer();
+    // Already have 5 available orders, max is 6 for level 1
+    const existingOrders = Array.from({ length: 5 }, (_, i) =>
+      makeOrder({ id: `o${i}`, expiresAt: new Date('2026-01-01T14:00:00Z') }),
+    );
+    const now = new Date('2026-01-01T13:00:00Z');
+
+    const result = processTick(player, [], existingOrders, now);
+
+    expect(result.newOrderCount).toBe(1); // max 6 - 5 existing = 1
+  });
+
+  it('should generate zero orders if board is full', () => {
+    const player = makePlayer();
+    const existingOrders = Array.from({ length: 6 }, (_, i) =>
+      makeOrder({ id: `o${i}`, expiresAt: new Date('2026-01-01T14:00:00Z') }),
+    );
+    const now = new Date('2026-01-01T13:00:00Z');
+
+    const result = processTick(player, [], existingOrders, now);
+
+    expect(result.newOrderCount).toBe(0);
+  });
+
+  it('should generate more orders at higher levels', () => {
+    const player = makePlayer({ level: 10, reputation: 80 });
+    const now = new Date('2026-01-01T13:00:00Z');
+
+    const result = processTick(player, [], [], now);
+
+    // orderRate = (2 + 10*0.5) * (1 + 80/100) = 7 * 1.8 = 12.6 → floor = 12
+    // maxOrders = 5 + 10 = 15 → min(12, 15) = 12
+    expect(result.newOrderCount).toBe(12);
+  });
+
+  it('should account for expired orders freeing up slots', () => {
+    const player = makePlayer();
+    // 5 orders but 3 will expire during tick
+    const existingOrders = [
+      makeOrder({ id: 'o1', expiresAt: new Date('2026-01-01T12:10:00Z') }), // expires
+      makeOrder({ id: 'o2', expiresAt: new Date('2026-01-01T12:15:00Z') }), // expires
+      makeOrder({ id: 'o3', expiresAt: new Date('2026-01-01T12:20:00Z') }), // expires
+      makeOrder({ id: 'o4', expiresAt: new Date('2026-01-01T14:00:00Z') }), // stays
+      makeOrder({ id: 'o5', expiresAt: new Date('2026-01-01T14:00:00Z') }), // stays
+    ];
+    const now = new Date('2026-01-01T13:00:00Z');
+
+    const result = processTick(player, [], existingOrders, now);
+
+    // 3 expired, 2 remaining available, max 6 → could arrive 3, slots 4 → min(3, 4) = 3
+    expect(result.newOrderCount).toBe(3);
+  });
+});
+
+describe('processTick — delivery failure', () => {
+  it('should fail delivery when roll is below failure chance', () => {
+    const player = makePlayer();
+    // Order id "0" → seededRandom = 0.0048, will fail for any non-zero failure chance
+    const rider = makeRider({ id: 'r1', reliability: 5, cityKnowledge: 5, status: 'delivering' });
+    const order = makeOrder({
+      id: '0',
+      status: 'assigned',
+      riderId: 'r1',
+      assignedAt: new Date('2026-01-01T12:00:00Z'),
+    });
+    const now = new Date('2026-01-01T13:00:00Z');
+
+    const result = processTick(player, [rider], [order], now);
+
+    expect(result.orders[0].status).toBe('failed');
+    expect(result.failedDeliveries).toBe(1);
+    expect(result.revenue).toBe(0);
+    expect(result.riders[0].status).toBe('idle');
+  });
+
+  it('should succeed delivery when roll is above failure chance', () => {
+    const player = makePlayer();
+    // Order id "o1" → seededRandom = 0.349, well above any reasonable failure chance
+    const rider = makeRider({ id: 'r1', reliability: 5, cityKnowledge: 5, status: 'delivering' });
+    const order = makeOrder({
+      id: 'o1',
+      status: 'assigned',
+      riderId: 'r1',
+      assignedAt: new Date('2026-01-01T12:00:00Z'),
+    });
+    const now = new Date('2026-01-01T13:00:00Z');
+
+    const result = processTick(player, [rider], [order], now);
+
+    expect(result.orders[0].status).toBe('delivered');
+    expect(result.failedDeliveries).toBe(0);
+    expect(result.revenue).toBeGreaterThan(0);
+  });
+
+  it('should never fail with max reliability and knowledge', () => {
+    const player = makePlayer();
+    const rider = makeRider({
+      id: 'r1',
+      reliability: 10,
+      cityKnowledge: 10,
+      status: 'delivering',
+    });
+    const order = makeOrder({
+      id: '0', // lowest roll
+      status: 'assigned',
+      riderId: 'r1',
+      assignedAt: new Date('2026-01-01T12:00:00Z'),
+    });
+    const now = new Date('2026-01-01T13:00:00Z');
+
+    const result = processTick(player, [rider], [order], now);
+
+    expect(result.orders[0].status).toBe('delivered');
+  });
+
+  it('should decrease reputation on failure', () => {
+    const player = makePlayer({ reputation: 50 });
+    const rider = makeRider({ id: 'r1', reliability: 5, cityKnowledge: 5, status: 'delivering' });
+    const order = makeOrder({
+      id: '0', // will fail
+      status: 'assigned',
+      riderId: 'r1',
+      assignedAt: new Date('2026-01-01T12:00:00Z'),
+    });
+    const now = new Date('2026-01-01T13:00:00Z');
+
+    const result = processTick(player, [rider], [order], now);
+
+    expect(result.player.reputation).toBeLessThan(50);
+  });
+
+  it('should increase reputation on success', () => {
+    const player = makePlayer({ reputation: 50 });
+    const rider = makeRider({ id: 'r1', reliability: 5, cityKnowledge: 5, status: 'delivering' });
+    const order = makeOrder({
+      id: 'o1', // will succeed
+      status: 'assigned',
+      riderId: 'r1',
+      assignedAt: new Date('2026-01-01T12:00:00Z'),
+    });
+    const now = new Date('2026-01-01T13:00:00Z');
+
+    const result = processTick(player, [rider], [order], now);
+
+    expect(result.player.reputation).toBeGreaterThan(50);
   });
 });

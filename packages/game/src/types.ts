@@ -1,5 +1,11 @@
 export type OrderUrgency = 'normal' | 'urgent' | 'express';
-export type OrderStatus = 'available' | 'assigned' | 'picked_up' | 'delivered' | 'expired';
+export type OrderStatus =
+  | 'available'
+  | 'assigned'
+  | 'picked_up'
+  | 'delivered'
+  | 'failed'
+  | 'expired';
 export type RiderStatus = 'idle' | 'delivering' | 'resting';
 
 export interface Player {

@@ -103,3 +103,80 @@ describe('POST /api/riders/hire', () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe('POST /api/riders/:id/upgrade', () => {
+  const RIDER_ID = 'r1';
+
+  function postUpgrade(riderId: string, body: unknown) {
+    return app.request(`/api/riders/${riderId}/upgrade`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: authHeader,
+        'X-Forwarded-For': 'test-riders',
+      },
+      body: JSON.stringify(body),
+    });
+  }
+
+  it('should upgrade a rider stat', async () => {
+    mockDb.query.players.findFirst.mockResolvedValueOnce({ id: PLAYER_ID, money: 500, level: 5 });
+    mockDb.query.riders.findFirst.mockResolvedValueOnce({
+      id: RIDER_ID,
+      playerId: PLAYER_ID,
+      speed: 5,
+    });
+    mockDb.update.mockReturnValueOnce(mockUpdateWhere()); // player money
+    mockDb.update.mockReturnValueOnce(mockUpdateWhere()); // rider stat
+
+    const res = await postUpgrade(RIDER_ID, { stat: 'speed' });
+
+    expect(res.status).toBe(200);
+    const body: any = await res.json();
+    expect(body.oldValue).toBe(5);
+    expect(body.newValue).toBe(6);
+    expect(body.cost).toBe(150);
+  });
+
+  it('should reject if player level too low', async () => {
+    mockDb.query.players.findFirst.mockResolvedValueOnce({ id: PLAYER_ID, money: 500, level: 3 });
+
+    const res = await postUpgrade(RIDER_ID, { stat: 'speed' });
+
+    expect(res.status).toBe(403);
+  });
+
+  it('should reject if stat already at max', async () => {
+    mockDb.query.players.findFirst.mockResolvedValueOnce({ id: PLAYER_ID, money: 500, level: 5 });
+    mockDb.query.riders.findFirst.mockResolvedValueOnce({
+      id: RIDER_ID,
+      playerId: PLAYER_ID,
+      speed: 10,
+    });
+
+    const res = await postUpgrade(RIDER_ID, { stat: 'speed' });
+
+    expect(res.status).toBe(400);
+    expect(((await res.json()) as any).error).toMatch(/max/i);
+  });
+
+  it('should reject invalid stat name', async () => {
+    const res = await postUpgrade(RIDER_ID, { stat: 'morale' });
+
+    expect(res.status).toBe(400);
+  });
+
+  it('should reject if not enough money', async () => {
+    mockDb.query.players.findFirst.mockResolvedValueOnce({ id: PLAYER_ID, money: 10, level: 5 });
+    mockDb.query.riders.findFirst.mockResolvedValueOnce({
+      id: RIDER_ID,
+      playerId: PLAYER_ID,
+      speed: 5,
+    });
+
+    const res = await postUpgrade(RIDER_ID, { stat: 'speed' });
+
+    expect(res.status).toBe(400);
+    expect(((await res.json()) as any).error).toMatch(/money/i);
+  });
+});

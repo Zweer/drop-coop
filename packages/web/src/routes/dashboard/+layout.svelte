@@ -3,6 +3,7 @@
   import { page } from '$app/stores'
   import { api, getToken, setToken } from '$lib/api'
   import { Button } from '$lib/components/ui/button'
+  import { Progress } from '$lib/components/ui/progress'
   import { getProfile, setProfile } from '$lib/stores/profile.svelte'
   import { onMount } from 'svelte'
 
@@ -28,10 +29,13 @@
   }
 
   const navItems = [
-    { href: '/dashboard', label: '📊 Dashboard', icon: '📊' },
-    { href: '/dashboard/riders', label: '🏍️ Riders', icon: '🏍️' },
-    { href: '/dashboard/orders', label: '📦 Orders', icon: '📦' },
+    { href: '/dashboard', label: '📊 Dashboard' },
+    { href: '/dashboard/riders', label: '🏍️ Riders' },
+    { href: '/dashboard/orders', label: '📦 Orders' },
   ]
+
+  let progression = $derived(getProfile()?.progression as Record<string, unknown> | undefined)
+  let nextMilestone = $derived(progression?.nextMilestone as Record<string, unknown> | undefined)
 </script>
 
 {#if loading}
@@ -40,7 +44,6 @@
   </div>
 {:else if getProfile()}
   <div class="min-h-screen flex flex-col">
-    <!-- Top bar -->
     <header class="border-b px-4 py-3 flex items-center justify-between bg-card">
       <div class="flex items-center gap-6">
         <a href="/dashboard" class="text-xl font-bold">🚲 drop-coop</a>
@@ -57,12 +60,19 @@
       </div>
       <div class="flex items-center gap-4">
         <span class="text-sm font-medium">€{Number(getProfile()?.money).toFixed(0)}</span>
-        <span class="text-sm text-muted-foreground">Lv.{getProfile()?.level}</span>
+        <!-- Level + progress -->
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-muted-foreground">Lv.{getProfile()?.level}</span>
+          {#if progression}
+            <div class="w-16" title={nextMilestone ? `Next: Lv.${nextMilestone.level} — ${nextMilestone.description}` : 'Max level reached'}>
+              <Progress value={Number(progression.progressPercent)} class="h-1.5" />
+            </div>
+          {/if}
+        </div>
         <Button variant="ghost" size="sm" onclick={logout}>Logout</Button>
       </div>
     </header>
 
-    <!-- Content -->
     <main class="flex-1 p-6 max-w-5xl mx-auto w-full">
       {@render children?.()}
     </main>

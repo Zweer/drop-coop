@@ -10,6 +10,7 @@ export const orderStatusEnum = pgEnum('order_status', [
   'assigned',
   'picked_up',
   'delivered',
+  'failed',
   'expired',
 ]);
 
