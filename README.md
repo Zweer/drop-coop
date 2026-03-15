@@ -123,9 +123,15 @@ npm test             # Run tests
   - [x] Frontend (dashboard, riders, orders)
   - [x] Deploy to Vercel
 - [ ] **Phase 1**: Core game — economy, events, zones, hacking stages 2-3
-  - [ ] Security hardening (rate limiting, CORS lockdown, registration anti-spam)
-  - [ ] Richer economy (dynamic pricing, maintenance costs, weather bonuses)
-  - [ ] Zones (unlock, zone-specific orders, zone fees)
+  - [x] Security hardening (PBKDF2 passwords, CORS lockdown, rate limiting)
+  - [x] Zones (5 Milan zones with unlock, fees, zone-aware orders)
+  - [x] Progression system (levels from deliveries, milestones with unlocks)
+  - [x] Rider upgrades (speed, reliability, cityKnowledge, stamina)
+  - [x] Delivery failure mechanics (reliability + cityKnowledge based, deterministic)
+  - [x] Time-based order generation (rate scales with level/reputation)
+  - [x] Dark theme (light/dark/system toggle)
+  - [x] Live UI (auto-refresh 15s, real-time countdowns)
+  - [ ] Economy: dynamic pricing, weather bonuses
   - [ ] Random events (storms, festivals, strikes, competitor entry)
   - [ ] Leaderboard (tycoon + hacker rankings)
   - [ ] OAuth login (GitHub, Google via arctic)

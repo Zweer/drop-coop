@@ -22,56 +22,70 @@
 ```
 drop-coop/
 ├── packages/
-│   ├── api/                     # Backend (Hono API → Vercel serverless)
+│   ├── api/                     # Backend (Hono API, embedded in SvelteKit)
 │   │   ├── src/
-│   │   │   ├── index.ts         # Entry point (Hono app)
+│   │   │   ├── index.ts         # Hono app entry (Vercel serverless)
+│   │   │   ├── app.ts           # Hono app setup (CORS, rate limiting, routes)
 │   │   │   ├── routes/          # Route handlers
-│   │   │   │   ├── auth.ts      # Login, register
-│   │   │   │   ├── orders.ts    # Order management
-│   │   │   │   ├── riders.ts    # Rider management
-│   │   │   │   ├── market.ts    # Buy/sell equipment
-│   │   │   │   └── leaderboard.ts
-│   │   │   ├── middleware/       # Auth, stages, validation
+│   │   │   │   ├── auth.ts      # Register, login (PBKDF2)
+│   │   │   │   ├── orders.ts    # Order listing, assign
+│   │   │   │   ├── riders.ts    # Rider hire, upgrade
+│   │   │   │   ├── player.ts    # Profile + progression
+│   │   │   │   └── zones.ts     # Zone listing, unlock
+│   │   │   ├── middleware/
+│   │   │   │   ├── auth.ts      # JWT auth middleware
+│   │   │   │   └── rate-limit.ts # In-memory rate limiter
+│   │   │   ├── models/          # Drizzle table definitions
+│   │   │   │   ├── players.ts
+│   │   │   │   ├── riders.ts
+│   │   │   │   ├── orders.ts
+│   │   │   │   ├── zones.ts
+│   │   │   │   └── index.ts     # Re-exports all models
+│   │   │   ├── services/
+│   │   │   │   └── tick.ts      # Lazy tick (DB read → game engine → DB write)
 │   │   │   └── db/
-│   │   │       ├── schema.ts    # Drizzle table definitions
-│   │   │       ├── migrate.ts   # Migration runner
-│   │   │       └── index.ts     # DB connection (Neon)
+│   │   │       └── index.ts     # Neon DB connection
 │   │   ├── drizzle/             # Generated migrations
-│   │   ├── package.json
-│   │   └── tsconfig.json
+│   │   ├── test/                # API route tests (Vitest)
+│   │   └── package.json
 │   │
 │   ├── web/                     # Frontend (SvelteKit → Vercel)
 │   │   ├── src/
-│   │   │   ├── routes/          # SvelteKit pages
-│   │   │   ├── lib/
-│   │   │   │   ├── components/  # UI components
-│   │   │   │   └── api.ts       # API client
-│   │   │   └── app.html
-│   │   ├── package.json
-│   │   ├── svelte.config.js
-│   │   └── vite.config.ts
+│   │   │   ├── hooks.server.ts  # Embeds Hono API via SvelteKit hooks
+│   │   │   ├── app.html         # HTML shell (dark theme script)
+│   │   │   ├── app.css          # Tailwind + shadcn-svelte theme
+│   │   │   ├── routes/
+│   │   │   │   ├── +page.svelte         # Landing / login redirect
+│   │   │   │   ├── login/+page.svelte   # Login / register
+│   │   │   │   └── dashboard/           # Main game UI
+│   │   │   │       ├── +layout.svelte   # Nav, header, progression bar
+│   │   │   │       ├── +page.svelte     # Dashboard (stats, orders, actions)
+│   │   │   │       ├── riders/          # Rider management + upgrades
+│   │   │   │       └── orders/          # Order list + assignment
+│   │   │   └── lib/
+│   │   │       ├── api.ts               # API client (fetch wrapper)
+│   │   │       ├── stores/
+│   │   │       │   ├── profile.svelte.ts # Player profile state
+│   │   │       │   ├── tick.svelte.ts    # Auto-refresh (15s interval)
+│   │   │       │   └── theme.svelte.ts   # Dark/light/system toggle
+│   │   │       ├── components/ui/       # shadcn-svelte components
+│   │   │       └── hooks/               # Svelte hooks (is-mobile)
+│   │   └── package.json
 │   │
 │   └── game/                    # Game logic (pure functions, shared)
 │       ├── src/
 │       │   ├── engine.ts        # Core game loop (lazy tick)
-│       │   ├── economy.ts       # Pricing, costs, revenue
-│       │   ├── riders.ts        # Rider stats, assignment
-│       │   ├── orders.ts        # Order generation
-│       │   ├── events.ts        # Random events
-│       │   └── types.ts         # Shared types
-│       ├── package.json
-│       └── tsconfig.json
+│       │   ├── economy.ts       # Revenue, costs, failure, upgrades
+│       │   ├── progression.ts   # Levels, milestones
+│       │   ├── zones.ts         # Zone definitions (5 Milan zones)
+│       │   ├── types.ts         # Shared types (Player, Rider, Order)
+│       │   └── index.ts         # Re-exports
+│       ├── test/                # Game logic tests (Vitest)
+│       └── package.json
 │
 ├── challenges/                  # Challenge docs (per stage)
-│   ├── stage1.md
-│   └── ...
-│
 ├── solutions/                   # Official bot solutions
-│   ├── stage1/
-│   │   └── bot.ts
-│   └── ...
-│
-├── package.json                 # Root (workspaces)
+├── package.json                 # Root (npm workspaces)
 ├── biome.json
 ├── tsconfig.json
 └── vitest.config.ts

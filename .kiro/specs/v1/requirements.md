@@ -182,29 +182,35 @@ Each stage adds a real security layer. Stages are selectable via config (default
 
 ## Implementation Phases
 
-### Phase 0 — MVP (2-3 weekends)
-- [ ] Backend: Hono + Neon Postgres + Drizzle + basic auth
-- [ ] Game: Riders, orders, assign, deliver, get paid
-- [ ] Frontend: SvelteKit + shadcn-svelte (minimal, functional)
-- [ ] Stage 1: Plain REST API (no protection)
-- [ ] Deploy to Vercel
-- [ ] README with concept explanation
+### Phase 0 — MVP ✅
+- [x] Backend: Hono + Neon Postgres + Drizzle + basic auth
+- [x] Game: Riders, orders, assign, deliver, get paid
+- [x] Frontend: SvelteKit + shadcn-svelte (minimal, functional)
+- [x] Stage 1: Plain REST API (no protection)
+- [x] Deploy to Vercel (Hono embedded in SvelteKit via hooks.server.ts)
+- [x] README with concept explanation
 - [ ] Post on r/incremental_games for feedback
 
-### Phase 1 — Core Game (month 1-2)
-- [ ] Economy: costs, revenue, dynamic pricing
+### Phase 1 — Core Game (in progress)
+- [x] Security hardening (PBKDF2 passwords, CORS lockdown, rate limiting)
+- [x] Zones: 5 Milan zones with unlock, fees, zone-aware orders
+- [x] Progression system (levels from deliveries, milestones with unlocks)
+- [x] Rider upgrades (speed, reliability, cityKnowledge, stamina)
+- [x] Delivery failure mechanics (reliability + cityKnowledge based, deterministic)
+- [x] Time-based order generation (rate scales with level/reputation)
+- [x] Dark theme (light/dark/system toggle)
+- [x] Live UI (auto-refresh 15s, real-time countdowns)
+- [ ] Economy: dynamic pricing, weather bonuses
 - [ ] Events: random events affecting gameplay
-- [ ] Zones: multiple delivery zones
-- [ ] OAuth login with arctic (GitHub, Google)
-- [ ] Stage 2: JWT authentication
-- [ ] Stage 3: HMAC signing
 - [ ] Leaderboard (basic)
+- [ ] OAuth login with arctic (GitHub, Google)
+- [ ] Stage 2: JWT authentication (short expiry, refresh, hidden endpoints)
+- [ ] Stage 3: HMAC signing
 - [ ] Challenge descriptions for stages 1-3
 
 ### Phase 2 — Depth (month 3-4)
 - [ ] Cooperative mechanics (voting, profit sharing)
 - [ ] Multiple cities
-- [ ] Rider upgrades and progression
 - [ ] Stage 4: Obfuscated endpoints
 - [ ] Stage 5: Rate limiting + batch
 - [ ] Hidden endpoints (analytics, contracts)
@@ -231,4 +237,5 @@ Each stage adds a real security layer. Stages are selectable via config (default
 *Tagline: "Your delivery co-op, your rules."*
 *GitHub: Zweer/drop-coop*
 *Decision made: 2026-03-14*
-*Status: Requirements complete, implementation not started*
+*Status: Phase 0 complete, Phase 1 in progress*
+*Last updated: 2026-03-15*
