@@ -68,7 +68,7 @@ As you progress, the game adds security layers (JWT, HMAC signing, obfuscation, 
 
 ## Quick start
 
-Play at [dropcoop.vercel.app](https://dropcoop.vercel.app) (coming soon).
+Play at [drop-coop.vercel.app](https://drop-coop.vercel.app).
 
 ### Local development
 
@@ -115,13 +115,13 @@ npm test             # Run tests
 - [x] Concept and game design
 - [x] Tech stack decisions (Hono, SvelteKit, Neon, Drizzle, Vercel)
 - [x] Monorepo scaffold
-- [ ] **Phase 0**: MVP — core game loop + stage 1
-  - [ ] Database schema (players, riders, orders, zones)
-  - [ ] Auth (register/login, JWT)
-  - [ ] Game engine (lazy tick)
-  - [ ] API routes (riders, orders, assign, deliver)
-  - [ ] Frontend (dashboard, riders, orders)
-  - [ ] Deploy to Vercel
+- [x] **Phase 0**: MVP — core game loop + stage 1
+  - [x] Database schema (players, riders, orders, zones)
+  - [x] Auth (register/login, JWT)
+  - [x] Game engine (lazy tick)
+  - [x] API routes (riders, orders, assign, deliver)
+  - [x] Frontend (dashboard, riders, orders)
+  - [x] Deploy to Vercel
 - [ ] **Phase 1**: Economy, events, OAuth (arctic), stages 2-3
 - [ ] **Phase 2**: Cities, co-op mechanics, stages 4-5
 - [ ] **Phase 3**: WebSocket, protobuf, stages 6-8
