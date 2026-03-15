@@ -78,4 +78,7 @@ export const api = {
   events: {
     list: () => request<Record<string, unknown>[]>('/events'),
   },
+  leaderboard: {
+    top: () => request<Record<string, unknown>[]>('/leaderboard'),
+  },
 };

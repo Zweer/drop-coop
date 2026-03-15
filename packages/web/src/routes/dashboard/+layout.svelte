@@ -33,6 +33,7 @@
     { href: '/dashboard', label: '📊 Dashboard' },
     { href: '/dashboard/riders', label: '🏍️ Riders' },
     { href: '/dashboard/orders', label: '📦 Orders' },
+    { href: '/dashboard/leaderboard', label: '🏆 Leaderboard' },
   ]
 
   const themeIcons: Record<string, string> = { light: '☀️', dark: '🌙', system: '💻' }
