@@ -51,9 +51,9 @@ As you progress, the game adds security layers (JWT, HMAC signing, obfuscation, 
 
 | Stage | Name | Challenge |
 |-------|------|-----------|
-| 1 | Plain Sight | Discover the API with DevTools |
-| 2 | Token Game | Handle JWT auth + find hidden endpoints |
-| 3 | Signed & Sealed | Find HMAC key in obfuscated JS |
+| 1 | Plain Sight | Discover the API, handle JWT refresh |
+| 2 | Signed & Sealed | Find HMAC key, use bulk endpoints |
+| 3 | Data Edge | Use analytics data for optimal decisions |
 | 4 | Minified Madness | Deobfuscate frontend, reconstruct API map |
 | 5 | Rate & Wait | Bypass rate limiting, find batch endpoint |
 | 6 | Socket Dungeon | Implement WebSocket custom protocol |
@@ -133,10 +133,11 @@ npm test             # Run tests
   - [x] Live UI (auto-refresh 15s, real-time countdowns)
   - [x] Economy: dynamic pricing, weather bonuses
   - [x] Random events (storms, festivals, closures, viral reviews, sales)
-  - [ ] Leaderboard (tycoon + hacker rankings)
-  - [ ] OAuth login (GitHub, Google via arctic)
-  - [ ] Stage 2: JWT hardening (short expiry, refresh, hidden endpoints)
-  - [ ] Stage 3: HMAC request signing
+  - [x] Leaderboard (tycoon rankings)
+  - [x] OAuth login (GitHub, Google via arctic)
+  - [ ] JWT hardening (short expiry, refresh tokens)
+  - [ ] Stage 2: HMAC-protected bulk endpoints (batch assign, bulk upgrade)
+  - [ ] Stage 3: Analytics endpoints (demand forecast, rider efficiency)
   - [ ] Challenge descriptions for stages 1-3
 - [ ] **Phase 2**: Cities, co-op mechanics, stages 4-5
 - [ ] **Phase 3**: WebSocket, protobuf, stages 6-8

@@ -134,13 +134,15 @@ POST /api/coop/vote
 
 #### Hacking Stages
 
-Each stage adds a real security layer. Stages are selectable via config (default: stage 1).
+Stages are additive — each one builds on the previous. The challenge is not just discovering the API (AI agents make that trivial in 2026), but using it effectively to build the best bot.
 
-| Stage | Name | Protection | Skills Learned |
+**Design philosophy**: Discovery is easy. Optimization is hard. The leaderboard is the real competition.
+
+| Stage | Name | What's New | Skills Learned |
 |-------|------|-----------|----------------|
-| 1 | Plain Sight | None (session cookie only) | HTTP basics, DevTools, curl |
-| 2 | Token Game | JWT with 5min expiry + hidden endpoints | JWT, token refresh, API discovery |
-| 3 | Signed & Sealed | HMAC-SHA256 request signing | HMAC, JS code reading |
+| 1 | Plain Sight | Open REST API, JWT + refresh | HTTP basics, DevTools, curl, JWT refresh |
+| 2 | Signed & Sealed | HMAC-protected bulk endpoints | HMAC signing, JS code reading, bulk operations |
+| 3 | Data Edge | Analytics endpoints (HMAC-protected) | Data-driven optimization, forecasting |
 | 4 | Minified Madness | Obfuscated JS, hashed endpoint names | JS deobfuscation, AST analysis |
 | 5 | Rate & Wait | Rate limiting + hidden batch endpoint | Rate limit evasion, timing |
 | 6 | Socket Dungeon | WebSocket with custom protocol | WebSocket, custom protocols |
@@ -202,10 +204,11 @@ Each stage adds a real security layer. Stages are selectable via config (default
 - [x] Live UI (auto-refresh 15s, real-time countdowns)
 - [x] Economy: dynamic pricing, weather bonuses
 - [x] Events: random events affecting gameplay
-- [ ] Leaderboard (basic)
-- [ ] OAuth login with arctic (GitHub, Google)
-- [ ] Stage 2: JWT authentication (short expiry, refresh, hidden endpoints)
-- [ ] Stage 3: HMAC signing
+- [x] Leaderboard (basic)
+- [x] OAuth login with arctic (GitHub, Google)
+- [ ] JWT hardening (short expiry, refresh tokens) — baseline security
+- [ ] Stage 2: HMAC-protected bulk endpoints (batch assign, bulk upgrade)
+- [ ] Stage 3: Analytics endpoints (demand forecast, rider efficiency)
 - [ ] Challenge descriptions for stages 1-3
 
 ### Phase 2 — Depth (month 3-4)

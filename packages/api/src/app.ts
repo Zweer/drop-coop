@@ -2,8 +2,10 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 
 import { authMiddleware } from './middleware/auth.ts';
+import { hmacMiddleware } from './middleware/hmac.ts';
 import { rateLimiter } from './middleware/rate-limit.ts';
 import auth from './routes/auth.ts';
+import batchRoute from './routes/batch.ts';
 import eventsRoute from './routes/events.ts';
 import leaderboardRoute from './routes/leaderboard.ts';
 import oauth from './routes/oauth.ts';
@@ -30,7 +32,7 @@ app.use(
       return null;
     },
     allowMethods: ['GET', 'POST', 'OPTIONS'],
-    allowHeaders: ['Content-Type', 'Authorization'],
+    allowHeaders: ['Content-Type', 'Authorization', 'X-Signature'],
     maxAge: 86400,
   }),
 );
@@ -54,5 +56,9 @@ app.route('/api/orders', ordersRoute);
 app.route('/api/zones', zonesRoute);
 app.route('/api/events', eventsRoute);
 app.route('/api/leaderboard', leaderboardRoute);
+
+// Stage 2: HMAC-protected bulk endpoints
+app.use('/api/batch/*', hmacMiddleware);
+app.route('/api/batch', batchRoute);
 
 export default app;

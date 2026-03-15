@@ -184,24 +184,26 @@ Reset progress for permanent bonuses:
 ## Hacking Stage Details
 
 ### Stage 1 — "Plain Sight"
-**Protection**: Session cookie only
+**Protection**: JWT with short expiry (5 min) + refresh token
 **API**: Standard REST, JSON responses
 **Discovery**: Open DevTools → Network tab → see all requests
-**Challenge**: Write a script that calls `POST /api/orders/assign` automatically
+**Challenge**: Write a bot that assigns orders automatically, handle JWT refresh
 **Hint in game**: "Pro tip: press F12 to see how the pros do it"
 
-### Stage 2 — "Token Game"
-**Protection**: JWT with 5-minute expiry
-**New mechanic**: Hidden endpoint `/api/secret-shop` with better equipment
-**Discovery**: JWT in Authorization header, decode to see expiry
-**Challenge**: Handle token refresh, find the secret shop endpoint
-**Hint in game**: "Some shops aren't on the map..."
-
-### Stage 3 — "Signed & Sealed"
-**Protection**: Every POST request needs `X-Signature: HMAC-SHA256(body, key)`
+### Stage 2 — "Signed & Sealed"
+**Protection**: HMAC-SHA256 signature required on bulk/advanced POST endpoints
 **Key location**: In frontend JS, variable named something misleading like `ANALYTICS_ID`
-**Discovery**: Requests fail without signature → inspect frontend JS
-**Challenge**: Find the key, implement signing in your bot
+**New endpoints**: `POST /api/batch` (assign N orders in one call), `POST /api/riders/bulk-upgrade`
+**Discovery**: Bulk endpoints return 401 without signature → inspect frontend JS to find key
+**Challenge**: Find the HMAC key, implement signing, use bulk operations for efficiency
+**Advantage**: Bulk operations = less latency, more throughput, competitive edge on leaderboard
+
+### Stage 3 — "Data Edge"
+**Protection**: HMAC-SHA256 (same key as stage 2)
+**New endpoints**: `/api/analytics/demand-forecast`, `/api/analytics/rider-efficiency`
+**Discovery**: Documented in challenge description — the challenge is USING the data, not finding it
+**Challenge**: Build a bot that uses demand forecasts and efficiency data to make optimal decisions
+**Advantage**: Data-driven assignment = better profit margins, fewer failed deliveries
 
 ### Stage 4 — "Minified Madness"
 **Protection**: Frontend fully minified, endpoint names are hashes
