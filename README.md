@@ -122,7 +122,16 @@ npm test             # Run tests
   - [x] API routes (riders, orders, assign, deliver)
   - [x] Frontend (dashboard, riders, orders)
   - [x] Deploy to Vercel
-- [ ] **Phase 1**: Economy, events, OAuth (arctic), stages 2-3
+- [ ] **Phase 1**: Core game — economy, events, zones, hacking stages 2-3
+  - [ ] Security hardening (rate limiting, CORS lockdown, registration anti-spam)
+  - [ ] Richer economy (dynamic pricing, maintenance costs, weather bonuses)
+  - [ ] Zones (unlock, zone-specific orders, zone fees)
+  - [ ] Random events (storms, festivals, strikes, competitor entry)
+  - [ ] Leaderboard (tycoon + hacker rankings)
+  - [ ] OAuth login (GitHub, Google via arctic)
+  - [ ] Stage 2: JWT hardening (short expiry, refresh, hidden endpoints)
+  - [ ] Stage 3: HMAC request signing
+  - [ ] Challenge descriptions for stages 1-3
 - [ ] **Phase 2**: Cities, co-op mechanics, stages 4-5
 - [ ] **Phase 3**: WebSocket, protobuf, stages 6-8
 - [ ] **Phase 4**: Community features, mobile PWA
