@@ -4,6 +4,7 @@ import { cors } from 'hono/cors';
 import { authMiddleware } from './middleware/auth.ts';
 import { hmacMiddleware } from './middleware/hmac.ts';
 import { rateLimiter } from './middleware/rate-limit.ts';
+import analyticsRoute from './routes/analytics.ts';
 import auth from './routes/auth.ts';
 import batchRoute from './routes/batch.ts';
 import eventsRoute from './routes/events.ts';
@@ -60,5 +61,9 @@ app.route('/api/leaderboard', leaderboardRoute);
 // Stage 2: HMAC-protected bulk endpoints
 app.use('/api/batch/*', hmacMiddleware);
 app.route('/api/batch', batchRoute);
+
+// Stage 3: HMAC-protected analytics
+app.use('/api/analytics/*', hmacMiddleware);
+app.route('/api/analytics', analyticsRoute);
 
 export default app;
