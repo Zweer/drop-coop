@@ -19,6 +19,7 @@
   // Track previous state for micro-feedback
   let prevAssigned = new Map<string, { riderId: string; reward: number }>()
   let prevEventIds = new Set<string>()
+  let prevTotalDeliveries = -1
 
   const clock = useTick()
 
@@ -38,6 +39,13 @@
           toast.info(`${e.emoji} ${e.name} started!`, { description: e.description as string })
         }
       }
+
+      // First delivery celebration
+      const newTotal = Number(p.totalDeliveries)
+      if (prevTotalDeliveries === 0 && newTotal > 0) {
+        toast.success('🎉 First delivery completed!', { description: 'Your co-op is up and running. Keep going!' })
+      }
+
       for (const order of all) {
         const prev = prevAssigned.get(order.id as string)
         if (!prev) continue
@@ -63,6 +71,7 @@
         .map((o: Record<string, unknown>) => [o.id as string, { riderId: o.riderId as string, reward: Number(o.reward) }])
     )
     prevEventIds = new Set(activeEvents.map(e => e.id as string))
+    prevTotalDeliveries = Number(getProfile()?.totalDeliveries)
   }
 
   onMount(async () => {
@@ -82,11 +91,13 @@
   let unlockedMilestones = $derived((progression?.unlockedMilestones ?? []) as Record<string, unknown>[])
   let lastTick = $derived(getProfile()?.lastTick as Record<string, unknown> | undefined)
 
+  let isNewPlayer = $derived(Number(getProfile()?.totalDeliveries) === 0)
+
   let nextStep = $derived.by(() => {
-    if (riders.length === 0) return { text: 'Hire your first rider to start delivering!', action: '/dashboard/riders', label: 'Hire a rider', icon: '🏍️' }
-    if (availableOrders > 0 && idleRiders > 0) return { text: `${availableOrders} orders waiting, ${idleRiders} riders idle — assign them!`, action: '/dashboard/orders', label: 'Assign orders', icon: '📦' }
-    if (idleRiders === 0 && deliveringRiders > 0) return { text: 'All riders out delivering. Hire more to scale up!', action: '/dashboard/riders', label: 'Hire more', icon: '⏳' }
-    if (availableOrders === 0) return { text: 'No orders right now. They arrive over time — check back soon!', action: '/dashboard/orders', label: 'Check orders', icon: '😴' }
+    if (riders.length === 0) return { text: 'Hire your first rider to start delivering!', action: '/dashboard/riders', label: 'Hire a rider', icon: '🏍️', step: isNewPlayer ? '1/3' : null }
+    if (availableOrders > 0 && idleRiders > 0) return { text: `${availableOrders} orders waiting, ${idleRiders} riders idle — assign them!`, action: '/dashboard/orders', label: 'Assign orders', icon: '📦', step: isNewPlayer ? '2/3' : null }
+    if (idleRiders === 0 && deliveringRiders > 0) return { text: isNewPlayer ? 'Your rider is out! Wait for the delivery to complete.' : 'All riders out delivering. Hire more to scale up!', action: isNewPlayer ? '/dashboard' : '/dashboard/riders', label: isNewPlayer ? 'Wait here' : 'Hire more', icon: '⏳', step: isNewPlayer ? '3/3' : null }
+    if (availableOrders === 0) return { text: 'No orders right now. They arrive over time — check back soon!', action: '/dashboard/orders', label: 'Check orders', icon: '😴', step: null }
     return null
   })
 
@@ -113,8 +124,18 @@
   </div>
 {:else}
 <div class="space-y-5">
-  <!-- Progression -->
-  {#if progression}
+  <!-- Welcome / Progression -->
+  {#if isNewPlayer && riders.length === 0}
+    <Card class="border-primary/20 bg-primary/5">
+      <CardContent class="py-5">
+        <p class="text-lg font-bold mb-1">🚲 Welcome to your co-op!</p>
+        <p class="text-sm text-muted-foreground">
+          You're the new manager of a delivery cooperative in Milan.
+          Hire riders, assign orders, and grow your business. Let's get started!
+        </p>
+      </CardContent>
+    </Card>
+  {:else if progression}
     <Card class="border-primary/20 bg-primary/5">
       <CardContent class="py-4">
         <div class="flex items-center justify-between mb-2">
@@ -145,7 +166,10 @@
   <!-- Next step -->
   {#if nextStep}
     <div class="flex items-center justify-between bg-muted rounded-lg p-3 border">
-      <p class="text-sm"><span class="mr-1">{nextStep.icon}</span> {nextStep.text}</p>
+      <p class="text-sm">
+        {#if nextStep.step}<Badge variant="outline" class="mr-2 text-xs">Step {nextStep.step}</Badge>{/if}
+        <span class="mr-1">{nextStep.icon}</span> {nextStep.text}
+      </p>
       <Button size="sm" href={nextStep.action}>{nextStep.label}</Button>
     </div>
   {/if}
