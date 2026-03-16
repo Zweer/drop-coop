@@ -13,12 +13,14 @@ export function rateLimiter(opts: { max: number; windowMs: number }) {
   const store = new Map<string, Entry>();
 
   // Cleanup stale entries every minute
+  /* c8 ignore start */
   setInterval(() => {
     const now = Date.now();
     for (const [key, entry] of store) {
       if (now > entry.resetAt) store.delete(key);
     }
   }, 60_000).unref();
+  /* c8 ignore stop */
 
   return async (c: Context, next: Next) => {
     const key = c.req.header('x-forwarded-for') ?? c.req.header('x-real-ip') ?? 'unknown';

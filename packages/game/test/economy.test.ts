@@ -105,23 +105,35 @@ describe('calculateMaxOrders', () => {
 
 describe('calculateFailureChance', () => {
   it('should be 0 for max stats', () => {
-    expect(calculateFailureChance({ reliability: 10, cityKnowledge: 10 })).toBe(0);
+    expect(calculateFailureChance({ reliability: 10, cityKnowledge: 10, morale: 50 })).toBe(0);
   });
 
   it('should increase with lower reliability', () => {
-    const low = calculateFailureChance({ reliability: 3, cityKnowledge: 5 });
-    const high = calculateFailureChance({ reliability: 8, cityKnowledge: 5 });
+    const low = calculateFailureChance({ reliability: 3, cityKnowledge: 5, morale: 50 });
+    const high = calculateFailureChance({ reliability: 8, cityKnowledge: 5, morale: 50 });
     expect(low).toBeGreaterThan(high);
   });
 
   it('should increase with lower city knowledge', () => {
-    const low = calculateFailureChance({ reliability: 5, cityKnowledge: 3 });
-    const high = calculateFailureChance({ reliability: 5, cityKnowledge: 8 });
+    const low = calculateFailureChance({ reliability: 5, cityKnowledge: 3, morale: 50 });
+    const high = calculateFailureChance({ reliability: 5, cityKnowledge: 8, morale: 50 });
     expect(low).toBeGreaterThan(high);
   });
 
   it('should cap at 0.5', () => {
-    expect(calculateFailureChance({ reliability: 1, cityKnowledge: 1 })).toBe(0.27);
+    expect(calculateFailureChance({ reliability: 1, cityKnowledge: 1, morale: 50 })).toBe(0.27);
+  });
+
+  it('should increase with low morale (<30)', () => {
+    const high = calculateFailureChance({ reliability: 5, cityKnowledge: 5, morale: 50 });
+    const low = calculateFailureChance({ reliability: 5, cityKnowledge: 5, morale: 10 });
+    expect(low).toBeGreaterThan(high);
+  });
+
+  it('should not add morale risk when morale >= 30', () => {
+    const at30 = calculateFailureChance({ reliability: 5, cityKnowledge: 5, morale: 30 });
+    const at50 = calculateFailureChance({ reliability: 5, cityKnowledge: 5, morale: 50 });
+    expect(at30).toBe(at50);
   });
 });
 

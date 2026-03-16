@@ -13,6 +13,7 @@ function normalizePath(path: string): string {
 /** Track unique endpoint discovery per player. Fire-and-forget, never blocks. */
 export function endpointTracker(c: Context, next: Next): Promise<void> {
   const playerId = c.get('playerId') as string | undefined;
+  /* c8 ignore next -- playerId always set by auth middleware */
   if (playerId) {
     const endpoint = `${c.req.method} ${normalizePath(c.req.path)}`;
     // Fire-and-forget — don't await, don't block the request

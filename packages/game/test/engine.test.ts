@@ -432,4 +432,39 @@ describe('processTick — delivery failure', () => {
 
     expect(result.player.reputation).toBeGreaterThan(50);
   });
+
+  it('should skip assigned order if rider not found', () => {
+    const player = makePlayer();
+    const order = makeOrder({
+      status: 'assigned',
+      riderId: 'ghost-rider',
+      assignedAt: new Date('2026-01-01T12:00:00Z'),
+    });
+    const now = new Date('2026-01-01T13:00:00Z');
+
+    const result = processTick(player, [], [order], now);
+
+    expect(result.orders[0].status).toBe('assigned');
+  });
+
+  it('should not drift morale when exactly at baseline (50)', () => {
+    const player = makePlayer();
+    const riders = [makeRider({ morale: 50 })];
+    const now = new Date('2026-01-01T14:00:00Z');
+
+    const result = processTick(player, riders, [], now);
+
+    expect(result.riders[0].morale).toBe(50);
+  });
+
+  it('should drift high morale down toward baseline', () => {
+    const player = makePlayer();
+    const riders = [makeRider({ morale: 80 })];
+    const now = new Date('2026-01-01T22:00:00Z'); // 10 hours
+
+    const result = processTick(player, riders, [], now);
+
+    // 80 - 1/hr * 10hr = 70
+    expect(result.riders[0].morale).toBe(70);
+  });
 });

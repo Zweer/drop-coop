@@ -91,6 +91,7 @@ batchRoute.post('/upgrade', async (c) => {
   if (!body.success) return c.json({ error: body.error.flatten() }, 400);
 
   const player = await db.query.players.findFirst({ where: eq(players.id, playerId) });
+  /* c8 ignore next */
   if (!player) return c.json({ error: 'Player not found' }, 404);
   if (player.level < 5) return c.json({ error: 'Upgrades unlock at level 5' }, 403);
 

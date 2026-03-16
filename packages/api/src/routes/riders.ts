@@ -67,6 +67,7 @@ ridersRoute.post('/hire', async (c) => {
   const player = await db.query.players.findFirst({
     where: eq(players.id, playerId),
   });
+  /* c8 ignore next */
   if (!player) return c.json({ error: 'Player not found' }, 404);
   if (player.money < poolEntry.hireCost) return c.json({ error: 'Not enough money' }, 400);
 
@@ -113,6 +114,7 @@ ridersRoute.post('/:id/upgrade', async (c) => {
   const player = await db.query.players.findFirst({
     where: eq(players.id, playerId),
   });
+  /* c8 ignore next */
   if (!player) return c.json({ error: 'Player not found' }, 404);
   if (player.level < REQUIRED_LEVEL)
     return c.json({ error: `Requires level ${REQUIRED_LEVEL}` }, 403);

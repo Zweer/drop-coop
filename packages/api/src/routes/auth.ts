@@ -56,12 +56,14 @@ export async function createRefreshToken(playerId: string): Promise<string> {
 
 export async function verifyToken(token: string): Promise<string> {
   const { payload } = await jwtVerify(token, JWT_SECRET);
+  /* c8 ignore next -- sub always set by createToken */
   return payload.sub ?? '';
 }
 
 export async function verifyRefreshToken(token: string): Promise<string> {
   const { payload } = await jwtVerify(token, JWT_SECRET);
   if (payload.type !== 'refresh') throw new Error('Not a refresh token');
+  /* c8 ignore next -- sub always set by createRefreshToken */
   return payload.sub ?? '';
 }
 

@@ -255,28 +255,33 @@ describe('Batch edge cases', () => {
       await testDb.update(riders).set({ status: 'idle', energy: 100 }).where(eq(riders.id, id));
     }
 
-    // Generate orders
-    await testDb
-      .update(players)
-      .set({ lastTickAt: new Date(Date.now() - 60 * 60 * 1000) })
-      .where(eq(players.id, playerId));
-    await client.get('/api/orders/available');
+    // Create an available order
+    const { TEST_ORDER_DEFAULTS } = await import('./e2e-helpers.ts');
+    const [order] = await testDb
+      .insert(orders)
+      .values({
+        playerId,
+        ...TEST_ORDER_DEFAULTS,
+        distance: 3,
+        urgency: 'normal' as const,
+        reward: 8,
+        status: 'available',
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+      })
+      .returning();
 
-    const available = await testDb.query.orders.findMany({ where: eq(orders.status, 'available') });
+    const res = await client.signedPost('/api/batch/assign', {
+      assignments: [
+        { riderId: riderIds[0], orderId: order.id },
+        { riderId: riderIds[1], orderId: '00000000-0000-0000-0000-000000000099' },
+      ],
+    });
+    expect(res.status).toBe(200);
 
-    if (available.length > 0) {
-      const res = await client.signedPost('/api/batch/assign', {
-        assignments: [
-          { riderId: riderIds[0], orderId: available[0].id },
-          { riderId: '00000000-0000-0000-0000-000000000099', orderId: available[0].id },
-        ],
-      });
-      expect(res.status).toBe(200);
-
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body).toHaveProperty('results');
-      expect(body).toHaveProperty('errors');
-    }
+    const body = (await res.json()) as Record<string, unknown>;
+    expect((body.results as unknown[]).length).toBe(1);
+    expect((body.errors as { error: string }[]).length).toBe(1);
+    expect((body.errors as { error: string }[])[0].error).toMatch(/not available/i);
   });
 
   it('should reject batch upgrade with invalid stat', async () => {
@@ -503,5 +508,307 @@ describe('Analytics edge cases', () => {
       expect(Number(pred.probability)).toBeGreaterThanOrEqual(0);
       expect(Number(pred.probability)).toBeLessThanOrEqual(1);
     }
+  });
+
+  it('should return active events in analytics/events response', async () => {
+    // Insert an active event
+    await client.get('/api/zones');
+    const { events: eventsTable } = await import('../src/models/index.ts');
+    await testDb.insert(eventsTable).values({
+      playerId,
+      type: 'rainstorm',
+      startsAt: new Date(),
+      expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
+    });
+
+    const res = await client.signedGet('/api/analytics/events?hours=6');
+    expect(res.status).toBe(200);
+
+    const body = (await res.json()) as Record<string, unknown>;
+    const active = body.active as Record<string, unknown>[];
+    expect(active.length).toBeGreaterThanOrEqual(1);
+    const storm = active.find((a) => a.type === 'rainstorm');
+    expect(storm).toBeDefined();
+    expect(storm!.name).toBe('Rainstorm');
+  });
+});
+
+// --- Auth extra edge cases ---
+
+describe('Auth extra edge cases', () => {
+  it('should reject refresh when using access token instead of refresh token', async () => {
+    const result = await registerPlayer(app, 'refreshbad', 'secret123', '10.0.70.0');
+    const res = await app.request('/api/auth/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Forwarded-For': '10.0.70.1' },
+      body: JSON.stringify({ refreshToken: result.token }),
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it('should reject password login for OAuth-only user', async () => {
+    const { players: playersTable, authAccounts } = await import('../src/models/index.ts');
+    const [oauthPlayer] = await testDb
+      .insert(playersTable)
+      .values({ username: 'oauthonly' })
+      .returning();
+    await testDb.insert(authAccounts).values({
+      playerId: oauthPlayer.id,
+      type: 'github',
+      providerId: '12345',
+      credential: null,
+    });
+
+    const res = await app.request('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Forwarded-For': '10.0.70.2' },
+      body: JSON.stringify({ username: 'oauthonly', password: 'anything1' }),
+    });
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body.error).toMatch(/OAuth/i);
+  });
+});
+
+// --- CORS ---
+
+describe('CORS', () => {
+  it('should allow localhost origin', async () => {
+    const res = await app.request('/api/health', {
+      headers: { Origin: 'http://localhost:5173' },
+    });
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:5173');
+  });
+
+  it('should allow Vercel preview deployment origin', async () => {
+    const res = await app.request('/api/health', {
+      headers: { Origin: 'https://dropcoop-abc123.vercel.app' },
+    });
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe(
+      'https://dropcoop-abc123.vercel.app',
+    );
+  });
+
+  it('should reject unknown origin', async () => {
+    const res = await app.request('/api/health', {
+      headers: { Origin: 'https://evil.com' },
+    });
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBeNull();
+  });
+});
+
+// --- Batch: tired rider + money runs out ---
+
+describe('Batch: energy and money edge cases', () => {
+  let client: ReturnType<typeof createClient>;
+  let playerId: string;
+  const riderIds: string[] = [];
+  const token = { value: '' };
+  const IP = '10.0.44.0';
+
+  it('setup', async () => {
+    const result = await registerPlayer(app, 'batchex2', 'secret123', IP);
+    token.value = result.token;
+    playerId = result.playerId;
+    client = createClient(app, token, IP);
+
+    await testDb.update(players).set({ money: 50000, level: 10 }).where(eq(players.id, playerId));
+    await client.get('/api/zones');
+
+    const poolRes = await client.get('/api/riders/pool');
+    const pool = ((await poolRes.json()) as Record<string, unknown>).riders as Record<
+      string,
+      unknown
+    >[];
+    for (const p of pool.slice(0, 2)) {
+      const res = await client.post('/api/riders/hire', { poolId: p.id });
+      riderIds.push(((await res.json()) as Record<string, unknown>).id as string);
+    }
+  });
+
+  it('should report tired rider error in batch assign', async () => {
+    await testDb
+      .update(riders)
+      .set({ status: 'idle', energy: 0 })
+      .where(eq(riders.id, riderIds[0]));
+
+    // Insert an available order directly
+    const { TEST_ORDER_DEFAULTS } = await import('./e2e-helpers.ts');
+    const [order] = await testDb
+      .insert(orders)
+      .values({
+        playerId,
+        ...TEST_ORDER_DEFAULTS,
+        distance: 5,
+        urgency: 'normal' as const,
+        reward: 10,
+        status: 'available',
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+      })
+      .returning();
+
+    const res = await client.signedPost('/api/batch/assign', {
+      assignments: [{ riderId: riderIds[0], orderId: order.id }],
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as Record<string, unknown>;
+    expect((body.errors as { error: string }[])[0].error).toMatch(/tired/i);
+  });
+
+  it('should report busy rider error in batch assign', async () => {
+    await testDb.update(riders).set({ status: 'delivering' }).where(eq(riders.id, riderIds[0]));
+
+    const { TEST_ORDER_DEFAULTS } = await import('./e2e-helpers.ts');
+    const [order] = await testDb
+      .insert(orders)
+      .values({
+        playerId,
+        ...TEST_ORDER_DEFAULTS,
+        distance: 3,
+        urgency: 'normal' as const,
+        reward: 8,
+        status: 'available',
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+      })
+      .returning();
+
+    const res = await client.signedPost('/api/batch/assign', {
+      assignments: [{ riderId: riderIds[0], orderId: order.id }],
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as Record<string, unknown>;
+    expect((body.errors as { error: string }[])[0].error).toMatch(/busy/i);
+
+    await testDb
+      .update(riders)
+      .set({ status: 'idle', energy: 100 })
+      .where(eq(riders.id, riderIds[0]));
+  });
+
+  it('should report rider not found in batch assign', async () => {
+    const { TEST_ORDER_DEFAULTS } = await import('./e2e-helpers.ts');
+    const [order] = await testDb
+      .insert(orders)
+      .values({
+        playerId,
+        ...TEST_ORDER_DEFAULTS,
+        distance: 3,
+        urgency: 'normal' as const,
+        reward: 8,
+        status: 'available',
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+      })
+      .returning();
+
+    const res = await client.signedPost('/api/batch/assign', {
+      assignments: [{ riderId: '00000000-0000-0000-0000-000000000099', orderId: order.id }],
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as Record<string, unknown>;
+    expect((body.errors as { error: string }[])[0].error).toMatch(/not found/i);
+  });
+
+  it('should stop batch upgrade when money runs out', async () => {
+    // Set very low money — enough for 1 upgrade but not 2
+    await testDb.update(riders).set({ speed: 2, reliability: 2 }).where(eq(riders.id, riderIds[0]));
+    // Cost for stat=2 is 30*2=60. Set money to 70 (enough for 1, not 2)
+    await testDb.update(players).set({ money: 70, level: 10 }).where(eq(players.id, playerId));
+
+    const res = await client.signedPost('/api/batch/upgrade', {
+      upgrades: [
+        { riderId: riderIds[0], stat: 'speed' },
+        { riderId: riderIds[0], stat: 'reliability' },
+      ],
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as Record<string, unknown>;
+    expect((body.results as unknown[]).length).toBe(1);
+    expect((body.errors as { error: string }[]).length).toBe(1);
+    expect((body.errors as { error: string }[])[0].error).toMatch(/money/i);
+  });
+});
+
+// --- Analytics: rider with delivery history ---
+
+describe('Analytics: rider efficiency with history', () => {
+  let client: ReturnType<typeof createClient>;
+  let playerId: string;
+  let riderId: string;
+  const token = { value: '' };
+  const IP = '10.0.45.0';
+
+  it('setup: register, hire, create delivery history', async () => {
+    const result = await registerPlayer(app, 'analhist', 'secret123', IP);
+    token.value = result.token;
+    playerId = result.playerId;
+    client = createClient(app, token, IP);
+
+    await testDb.update(players).set({ money: 50000, level: 10 }).where(eq(players.id, playerId));
+    await client.get('/api/zones');
+
+    const poolRes = await client.get('/api/riders/pool');
+    const pool = ((await poolRes.json()) as Record<string, unknown>).riders as Record<
+      string,
+      unknown
+    >[];
+    const hireRes = await client.post('/api/riders/hire', { poolId: pool[0].id });
+    riderId = ((await hireRes.json()) as Record<string, unknown>).id as string;
+
+    // Get a zone ID for the order
+    const zonesRes = await client.get('/api/zones');
+    const zones = (await zonesRes.json()) as Record<string, unknown>[];
+    const centro = zones.find((z) => z.slug === 'centro');
+
+    // Insert delivered + failed orders with zoneId
+    const { TEST_ORDER_DEFAULTS } = await import('./e2e-helpers.ts');
+    const { orders: ordersTable } = await import('../src/models/index.ts');
+    await testDb.insert(ordersTable).values([
+      {
+        playerId,
+        riderId,
+        zoneId: centro!.id as string,
+        ...TEST_ORDER_DEFAULTS,
+        distance: 2,
+        urgency: 'normal' as const,
+        reward: 5,
+        status: 'delivered' as const,
+        expiresAt: new Date(Date.now() + 60000),
+      },
+      {
+        playerId,
+        riderId,
+        zoneId: centro!.id as string,
+        ...TEST_ORDER_DEFAULTS,
+        distance: 3,
+        urgency: 'normal' as const,
+        reward: 7,
+        status: 'delivered' as const,
+        expiresAt: new Date(Date.now() + 60000),
+      },
+      {
+        playerId,
+        riderId,
+        ...TEST_ORDER_DEFAULTS,
+        distance: 4,
+        urgency: 'normal' as const,
+        reward: 9,
+        status: 'failed' as const,
+        expiresAt: new Date(Date.now() + 60000),
+      },
+    ]);
+  });
+
+  it('should return rider stats with delivery history and bestZoneId', async () => {
+    const res = await client.signedGet('/api/analytics/riders');
+    expect(res.status).toBe(200);
+
+    const body = (await res.json()) as Record<string, unknown>;
+    const stats = body.stats as Record<string, unknown>[];
+    const riderStat = stats.find((s) => s.riderId === riderId);
+
+    expect(riderStat).toBeDefined();
+    expect(riderStat!.deliveries).toBe(3);
+    expect(riderStat!.successRate).toBeCloseTo(0.67, 1);
+    expect(riderStat!.bestZoneId).toBeTruthy();
   });
 });
