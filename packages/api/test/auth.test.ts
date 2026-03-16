@@ -32,9 +32,9 @@ describe('POST /api/auth/register', () => {
     const res = await post('/api/auth/register', { username: 'testuser', password: 'secret123' });
 
     expect(res.status).toBe(201);
-    const body: any = await res.json();
+    const body = (await res.json()) as Record<string, unknown>;
     expect(body.token).toBeDefined();
-    expect(body.player.username).toBe('testuser');
+    expect((body.player as Record<string, unknown>).username).toBe('testuser');
   });
 
   it('should reject duplicate username', async () => {
@@ -72,9 +72,9 @@ describe('POST /api/auth/login', () => {
     const res = await post('/api/auth/login', { username: 'testuser', password: 'secret123' });
 
     expect(res.status).toBe(200);
-    const body: any = await res.json();
+    const body = (await res.json()) as Record<string, unknown>;
     expect(body.token).toBeDefined();
-    expect(body.player.id).toBe('p1');
+    expect((body.player as Record<string, unknown>).id).toBe('p1');
   });
 
   it('should reject wrong password', async () => {

@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { afterAll, describe, expect, it, vi } from 'vitest';
 
-import { createClient, createTestDb, registerPlayer, type TestDb } from './e2e-helpers.ts';
+import { createClient, registerPlayer, type TestDb } from './e2e-helpers.ts';
 
 let testDb: TestDb;
 let closeDb: () => Promise<void>;
@@ -202,7 +202,7 @@ describe('Zone edge cases', () => {
     const zones = (await zonesRes.json()) as Record<string, unknown>[];
     const navigli = zones.find((z) => z.slug === 'navigli');
 
-    const res = await client.post('/api/zones/unlock', { zoneId: navigli!.id });
+    const res = await client.post('/api/zones/unlock', { zoneId: navigli?.id });
     expect(res.status).toBe(403);
   });
 
@@ -213,7 +213,7 @@ describe('Zone edge cases', () => {
     const zones = (await zonesRes.json()) as Record<string, unknown>[];
     const navigli = zones.find((z) => z.slug === 'navigli');
 
-    const res = await client.post('/api/zones/unlock', { zoneId: navigli!.id });
+    const res = await client.post('/api/zones/unlock', { zoneId: navigli?.id });
     expect(res.status).toBe(400);
   });
 

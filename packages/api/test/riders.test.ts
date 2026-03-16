@@ -86,9 +86,9 @@ describe('GET /api/riders/pool', () => {
     const res = await get('/api/riders/pool');
 
     expect(res.status).toBe(200);
-    const body: any = await res.json();
+    const body = (await res.json()) as Record<string, unknown>;
     expect(body.riders).toHaveLength(1);
-    expect(body.riders[0]).toHaveProperty('name');
+    expect((body.riders as Record<string, unknown>[])[0]).toHaveProperty('name');
     expect(body).toHaveProperty('refreshesIn');
   });
 
@@ -113,7 +113,7 @@ describe('GET /api/riders/pool', () => {
     const res = await get('/api/riders/pool');
 
     expect(res.status).toBe(200);
-    const body: any = await res.json();
+    const body = (await res.json()) as Record<string, unknown>;
     expect(body.riders).toHaveLength(1);
   });
 });
@@ -145,7 +145,7 @@ describe('POST /api/riders/hire', () => {
     const res = await post('/api/riders/hire', { poolId: POOL_ID });
 
     expect(res.status).toBe(201);
-    const body: any = await res.json();
+    const body = (await res.json()) as Record<string, unknown>;
     expect(body.name).toBe('Marco');
   });
 
@@ -167,7 +167,7 @@ describe('POST /api/riders/hire', () => {
     const res = await post('/api/riders/hire', { poolId: POOL_ID });
 
     expect(res.status).toBe(400);
-    const body: any = await res.json();
+    const body = (await res.json()) as Record<string, unknown>;
     expect(body.error).toMatch(/money/i);
   });
 
@@ -209,7 +209,7 @@ describe('POST /api/riders/:id/upgrade', () => {
     const res = await postUpgrade(RIDER_ID, { stat: 'speed' });
 
     expect(res.status).toBe(200);
-    const body: any = await res.json();
+    const body = (await res.json()) as Record<string, unknown>;
     expect(body.oldValue).toBe(5);
     expect(body.newValue).toBe(6);
     expect(body.cost).toBe(150);
@@ -234,7 +234,7 @@ describe('POST /api/riders/:id/upgrade', () => {
     const res = await postUpgrade(RIDER_ID, { stat: 'speed' });
 
     expect(res.status).toBe(400);
-    expect(((await res.json()) as any).error).toMatch(/max/i);
+    expect(((await res.json()) as Record<string, unknown>).error).toMatch(/max/i);
   });
 
   it('should reject invalid stat name', async () => {
@@ -255,6 +255,6 @@ describe('POST /api/riders/:id/upgrade', () => {
     const res = await postUpgrade(RIDER_ID, { stat: 'speed' });
 
     expect(res.status).toBe(400);
-    expect(((await res.json()) as any).error).toMatch(/money/i);
+    expect(((await res.json()) as Record<string, unknown>).error).toMatch(/money/i);
   });
 });

@@ -1,13 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { afterAll, describe, expect, it, vi } from 'vitest';
 
-import {
-  createClient,
-  createTestDb,
-  hmacSign,
-  registerPlayer,
-  type TestDb,
-} from './e2e-helpers.ts';
+import { createClient, hmacSign, registerPlayer, type TestDb } from './e2e-helpers.ts';
 
 let testDb: TestDb;
 let closeDb: () => Promise<void>;
@@ -529,7 +523,7 @@ describe('Analytics edge cases', () => {
     expect(active.length).toBeGreaterThanOrEqual(1);
     const storm = active.find((a) => a.type === 'rainstorm');
     expect(storm).toBeDefined();
-    expect(storm!.name).toBe('Rainstorm');
+    expect(storm?.name).toBe('Rainstorm');
   });
 });
 
@@ -766,7 +760,7 @@ describe('Analytics: rider efficiency with history', () => {
       {
         playerId,
         riderId,
-        zoneId: centro!.id as string,
+        zoneId: centro?.id as string,
         ...TEST_ORDER_DEFAULTS,
         distance: 2,
         urgency: 'normal' as const,
@@ -777,7 +771,7 @@ describe('Analytics: rider efficiency with history', () => {
       {
         playerId,
         riderId,
-        zoneId: centro!.id as string,
+        zoneId: centro?.id as string,
         ...TEST_ORDER_DEFAULTS,
         distance: 3,
         urgency: 'normal' as const,
@@ -807,8 +801,8 @@ describe('Analytics: rider efficiency with history', () => {
     const riderStat = stats.find((s) => s.riderId === riderId);
 
     expect(riderStat).toBeDefined();
-    expect(riderStat!.deliveries).toBe(3);
-    expect(riderStat!.successRate).toBeCloseTo(0.67, 1);
-    expect(riderStat!.bestZoneId).toBeTruthy();
+    expect(riderStat?.deliveries).toBe(3);
+    expect(riderStat?.successRate).toBeCloseTo(0.67, 1);
+    expect(riderStat?.bestZoneId).toBeTruthy();
   });
 });

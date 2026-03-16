@@ -8,7 +8,7 @@ import {
   seededRandom,
   ZONES,
 } from '@drop-coop/game';
-import { and, eq, gt, inArray, sql } from 'drizzle-orm';
+import { and, eq, gt, inArray } from 'drizzle-orm';
 import { Hono } from 'hono';
 
 import { db } from '../db/index.ts';

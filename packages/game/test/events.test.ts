@@ -7,6 +7,7 @@ import {
   mergeEventEffects,
   rollNewEvents,
 } from '../src/events.js';
+import type { EventType } from '../src/types.js';
 
 describe('EVENT_CATALOG', () => {
   it('should have 5 event types', () => {
@@ -33,7 +34,7 @@ describe('getEventDefinition', () => {
   });
 
   it('should throw for unknown type', () => {
-    expect(() => getEventDefinition('tornado' as any)).toThrow('Unknown event type');
+    expect(() => getEventDefinition('tornado' as EventType)).toThrow('Unknown event type');
   });
 });
 

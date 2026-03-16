@@ -185,7 +185,7 @@ test('theme toggle cycles through modes', async ({ page }) => {
   await expect(themeBtn).toBeVisible();
   const initial = await themeBtn.textContent();
   await themeBtn.click();
-  await expect(themeBtn).not.toHaveText(initial!);
+  await expect(themeBtn).not.toHaveText(initial ?? '');
 });
 
 // --- Navigation ---

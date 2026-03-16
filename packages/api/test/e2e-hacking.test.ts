@@ -1,13 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { afterAll, describe, expect, it, vi } from 'vitest';
 
-import {
-  createClient,
-  createTestDb,
-  hmacSign,
-  registerPlayer,
-  type TestDb,
-} from './e2e-helpers.ts';
+import { createClient, registerPlayer, type TestDb } from './e2e-helpers.ts';
 
 let testDb: TestDb;
 let closeDb: () => Promise<void>;
@@ -71,7 +65,7 @@ describe('E2E: Hacking stages', () => {
     });
 
     it('should reject batch assign with wrong signature', async () => {
-      const body = JSON.stringify({ assignments: [] });
+      const _body = JSON.stringify({ assignments: [] });
       const res = await client.post(
         '/api/batch/assign',
         { assignments: [] },
@@ -198,7 +192,7 @@ describe('E2E: Hacking stages', () => {
 
       const entries = (await res.json()) as Record<string, unknown>[];
       // Our player used batch endpoints, should appear
-      const me = entries.find((e) => e.username === 'hacker');
+      const _me = entries.find((e) => e.username === 'hacker');
       // May or may not appear depending on timing of endpoint tracking
       expect(Array.isArray(entries)).toBe(true);
     });

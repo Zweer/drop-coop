@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { afterAll, describe, expect, it, vi } from 'vitest';
 
-import { createClient, createTestDb, registerPlayer, type TestDb } from './e2e-helpers.ts';
+import { createClient, registerPlayer, type TestDb } from './e2e-helpers.ts';
 
 let testDb: TestDb;
 let closeDb: () => Promise<void>;
@@ -93,7 +93,7 @@ describe('E2E: Full game loop', () => {
     const zones = (await zonesRes.json()) as Record<string, unknown>[];
     const navigli = zones.find((z) => z.slug === 'navigli');
 
-    const res = await client.post('/api/zones/unlock', { zoneId: navigli!.id });
+    const res = await client.post('/api/zones/unlock', { zoneId: navigli?.id });
     expect(res.status).toBe(201);
 
     const body = (await res.json()) as Record<string, unknown>;
@@ -105,7 +105,7 @@ describe('E2E: Full game loop', () => {
     const zones = (await zonesRes.json()) as Record<string, unknown>[];
     const navigli = zones.find((z) => z.slug === 'navigli');
 
-    const res = await client.post('/api/zones/unlock', { zoneId: navigli!.id });
+    const res = await client.post('/api/zones/unlock', { zoneId: navigli?.id });
     expect(res.status).toBe(409);
   });
 
@@ -215,7 +215,7 @@ describe('E2E: Full game loop', () => {
     expect(assignBody).toHaveProperty('estimatedMinutes');
 
     // Record money before delivery
-    const playerBefore = await testDb.query.players.findFirst({
+    const _playerBefore = await testDb.query.players.findFirst({
       where: eq(players.id, playerId),
     });
 

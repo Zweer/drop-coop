@@ -1,13 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { afterAll, describe, expect, it, vi } from 'vitest';
 
-import {
-  createClient,
-  createTestDb,
-  registerPlayer,
-  TEST_ORDER_DEFAULTS,
-  type TestDb,
-} from './e2e-helpers.ts';
+import { createClient, registerPlayer, TEST_ORDER_DEFAULTS, type TestDb } from './e2e-helpers.ts';
 
 let testDb: TestDb;
 let closeDb: () => Promise<void>;
@@ -69,8 +63,8 @@ describe('E2E: Game mechanics', () => {
 
       const rider = await testDb.query.riders.findFirst({ where: eq(riders.id, riderId) });
       // 50 + 10/hr * 2hr = 70
-      expect(rider!.energy).toBeGreaterThanOrEqual(69);
-      expect(rider!.energy).toBeLessThanOrEqual(71);
+      expect(rider?.energy).toBeGreaterThanOrEqual(69);
+      expect(rider?.energy).toBeLessThanOrEqual(71);
     });
 
     it('should regenerate energy 2x faster for resting rider', async () => {
@@ -87,8 +81,8 @@ describe('E2E: Game mechanics', () => {
 
       const rider = await testDb.query.riders.findFirst({ where: eq(riders.id, riderId) });
       // 50 + 20/hr * 2hr = 90
-      expect(rider!.energy).toBeGreaterThanOrEqual(89);
-      expect(rider!.energy).toBeLessThanOrEqual(91);
+      expect(rider?.energy).toBeGreaterThanOrEqual(89);
+      expect(rider?.energy).toBeLessThanOrEqual(91);
     });
 
     it('should cap energy at 100', async () => {
@@ -101,7 +95,7 @@ describe('E2E: Game mechanics', () => {
       await client.get('/api/player/profile');
 
       const rider = await testDb.query.riders.findFirst({ where: eq(riders.id, riderId) });
-      expect(rider!.energy).toBe(100);
+      expect(rider?.energy).toBe(100);
     });
   });
 
@@ -122,8 +116,8 @@ describe('E2E: Game mechanics', () => {
 
       const rider = await testDb.query.riders.findFirst({ where: eq(riders.id, riderId) });
       // 20 + 1/hr * 5hr = 25
-      expect(rider!.morale).toBeGreaterThan(20);
-      expect(rider!.morale).toBeLessThanOrEqual(30);
+      expect(rider?.morale).toBeGreaterThan(20);
+      expect(rider?.morale).toBeLessThanOrEqual(30);
     });
 
     it('should boost morale faster when resting', async () => {
@@ -140,7 +134,7 @@ describe('E2E: Game mechanics', () => {
 
       const rider = await testDb.query.riders.findFirst({ where: eq(riders.id, riderId) });
       // 20 + (1 drift + 3 rest)/hr * 5hr = 40
-      expect(rider!.morale).toBeGreaterThanOrEqual(35);
+      expect(rider?.morale).toBeGreaterThanOrEqual(35);
     });
 
     it('should decrease high morale toward baseline', async () => {
@@ -157,7 +151,7 @@ describe('E2E: Game mechanics', () => {
 
       const rider = await testDb.query.riders.findFirst({ where: eq(riders.id, riderId) });
       // 90 - 1/hr * 10hr = 80
-      expect(rider!.morale).toBeLessThan(90);
+      expect(rider?.morale).toBeLessThan(90);
     });
   });
 
@@ -165,8 +159,8 @@ describe('E2E: Game mechanics', () => {
 
   describe('Economy: costs', () => {
     it('should deduct salary costs over time', async () => {
-      const salary = (await testDb.query.riders.findFirst({ where: eq(riders.id, riderId) }))!
-        .salary;
+      const _salary = (await testDb.query.riders.findFirst({ where: eq(riders.id, riderId) }))
+        ?.salary;
       await testDb
         .update(players)
         .set({ money: 10000, lastTickAt: new Date(Date.now() - 1 * 60 * 60 * 1000) })
@@ -324,9 +318,11 @@ describe('E2E: Game mechanics', () => {
 
       await testDb.update(riders).set({ status: 'delivering' }).where(eq(riders.id, riderId));
 
-      const moneyBefore = (await testDb.query.players.findFirst({
-        where: eq(players.id, playerId),
-      }))!.money;
+      const _moneyBefore = (
+        await testDb.query.players.findFirst({
+          where: eq(players.id, playerId),
+        })
+      )?.money;
 
       await testDb
         .update(players)
@@ -338,14 +334,16 @@ describe('E2E: Game mechanics', () => {
       await client.get('/api/player/profile');
 
       const updatedOrder = await testDb.query.orders.findFirst({ where: eq(orders.id, order.id) });
-      expect(['delivered', 'failed']).toContain(updatedOrder!.status);
+      expect(['delivered', 'failed']).toContain(updatedOrder?.status);
 
       const updatedRider = await testDb.query.riders.findFirst({ where: eq(riders.id, riderId) });
-      expect(updatedRider!.status).toBe('idle');
+      expect(updatedRider?.status).toBe('idle');
     });
 
     it('should increment totalDeliveries on successful delivery', async () => {
-      const before = (await testDb.query.players.findFirst({ where: eq(players.id, playerId) }))!;
+      const before = (await testDb.query.players.findFirst({
+        where: eq(players.id, playerId),
+      })) as typeof players.$inferSelect;
 
       await testDb.delete(orders).where(eq(orders.playerId, playerId));
       await testDb
@@ -375,7 +373,9 @@ describe('E2E: Game mechanics', () => {
 
       await client.get('/api/player/profile');
 
-      const after = (await testDb.query.players.findFirst({ where: eq(players.id, playerId) }))!;
+      const after = (await testDb.query.players.findFirst({
+        where: eq(players.id, playerId),
+      })) as typeof players.$inferSelect;
       // Either delivered (totalDeliveries+1) or failed (same), both are valid outcomes
       expect(after.totalDeliveries).toBeGreaterThanOrEqual(before.totalDeliveries);
     });
@@ -426,7 +426,7 @@ describe('E2E: Game mechanics', () => {
       await testDb.insert(events).values({
         playerId,
         type: 'rainstorm',
-        zoneId: centro!.id as string,
+        zoneId: centro?.id as string,
         startsAt: new Date(),
         expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
       });

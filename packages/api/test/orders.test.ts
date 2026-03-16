@@ -81,7 +81,7 @@ describe('POST /api/orders/assign', () => {
     const res = await post('/api/orders/assign', { riderId, orderId });
 
     expect(res.status).toBe(200);
-    const body: any = await res.json();
+    const body = (await res.json()) as Record<string, unknown>;
     expect(body.orderId).toBe(orderId);
     expect(body.riderId).toBe(riderId);
     expect(body.estimatedMinutes).toBeGreaterThan(0);
@@ -97,7 +97,7 @@ describe('POST /api/orders/assign', () => {
     const res = await post('/api/orders/assign', { riderId, orderId });
 
     expect(res.status).toBe(400);
-    expect(((await res.json()) as any).error).toMatch(/busy/i);
+    expect(((await res.json()) as Record<string, unknown>).error).toMatch(/busy/i);
   });
 
   it('should reject if rider not found', async () => {
@@ -142,7 +142,7 @@ describe('POST /api/orders/assign', () => {
     const res = await post('/api/orders/assign', { riderId, orderId });
 
     expect(res.status).toBe(400);
-    expect(((await res.json()) as any).error).toMatch(/tired/i);
+    expect(((await res.json()) as Record<string, unknown>).error).toMatch(/tired/i);
   });
 
   it('should reject invalid UUIDs', async () => {

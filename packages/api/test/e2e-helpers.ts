@@ -56,6 +56,7 @@ export async function hmacSign(body: string): Promise<string> {
 
 /** Register a player and return token + playerId. */
 export async function registerPlayer(
+  // biome-ignore lint/complexity/noBannedTypes: Hono app type is complex
   app: { request: Function },
   username = 'e2etest',
   password = 'secret123',
@@ -86,7 +87,12 @@ export const TEST_ORDER_DEFAULTS = {
   dropoffLng: 9.195,
 };
 
-export function createClient(app: { request: Function }, tokenRef: { value: string }, ip?: string) {
+export function createClient(
+  // biome-ignore lint/complexity/noBannedTypes: Hono app type is complex
+  app: { request: Function },
+  tokenRef: { value: string },
+  ip?: string,
+) {
   const ipHeader = ip ? { 'X-Forwarded-For': ip } : {};
 
   function get(path: string, headers: Record<string, string> = {}) {
