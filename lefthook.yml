@@ -1,0 +1,14 @@
+pre-commit:
+  commands:
+    biome:
+      glob: "*.{ts,json,yaml,md,css,html}"
+      run: npx biome check --write --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
+      stage_fixed: true
+    test:
+      glob: "*.ts"
+      run: npm test
+
+commit-msg:
+  commands:
+    commitlint:
+      run: npx --no -- commitlint --edit

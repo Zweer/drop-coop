@@ -1,5 +1,0 @@
-"*.ts":
-  - "bash -c 'npm test'"
-
-"*.{ts,json,yaml,md,css,html}":
-  - "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true"
