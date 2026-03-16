@@ -7,6 +7,22 @@ pre-commit:
     test:
       glob: "*.ts"
       run: npm test
+    lockfile:
+      glob: "package-lock.json"
+      run: npx lockfile-lint
+    package-lint:
+      glob: "package.json"
+      run: npx npmPkgJsonLint .
+    package-sort:
+      glob: "package.json"
+      run: npx sort-package-json "package.json" "packages/*/package.json"
+      stage_fixed: true
+    typecheck:
+      glob: "packages/{api,game}/**/*.ts"
+      run: tsc --noEmit
+    typecheck-web:
+      glob: "packages/web/**/*.{ts,svelte}"
+      run: npm run check -w packages/web
 
 commit-msg:
   commands:
