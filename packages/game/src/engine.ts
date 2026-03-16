@@ -14,6 +14,11 @@ import type { Order, Player, Rider, TickModifiers } from './types.js';
 const ENERGY_REGEN_PER_HOUR = 10;
 const REPUTATION_PER_DELIVERY = 0.5;
 const REPUTATION_PER_FAILURE = -2;
+const MORALE_PER_DELIVERY = 2;
+const MORALE_PER_FAILURE = -5;
+const MORALE_DRIFT_PER_HOUR = 1;
+const MORALE_REST_PER_HOUR = 3;
+const MORALE_BASELINE = 50;
 
 const DEFAULT_MODIFIERS: TickModifiers = {
   speedMultiplier: 1,
@@ -97,19 +102,44 @@ export function processTick(
   });
 
   // 3. Free up riders whose deliveries completed or failed
-  const doneRiderIds = new Set(
-    finalOrders
-      .filter((o) => (o.status === 'delivered' || o.status === 'failed') && o.deliveredAt)
-      .map((o) => o.riderId),
-  );
+  const deliveredByRider = new Map<string, number>();
+  const failedByRider = new Map<string, number>();
+  for (const o of finalOrders) {
+    if (!o.riderId || !o.deliveredAt || o.deliveredAt <= player.lastTickAt) continue;
+    if (o.status === 'delivered')
+      deliveredByRider.set(o.riderId, (deliveredByRider.get(o.riderId) ?? 0) + 1);
+    if (o.status === 'failed')
+      failedByRider.set(o.riderId, (failedByRider.get(o.riderId) ?? 0) + 1);
+  }
 
-  // 4. Regenerate energy + update rider status
+  const doneRiderIds = new Set([...deliveredByRider.keys(), ...failedByRider.keys()]);
+
+  // 4. Regenerate energy, update morale, update rider status
   const updatedRiders = riders.map((rider) => {
     const energyRegen =
       rider.status === 'resting' ? ENERGY_REGEN_PER_HOUR * 2 : ENERGY_REGEN_PER_HOUR;
     const newEnergy = Math.min(100, rider.energy + energyRegen * elapsedHours);
     const newStatus = doneRiderIds.has(rider.id) ? ('idle' as const) : rider.status;
-    return { ...rider, energy: newEnergy, status: newStatus };
+
+    // Morale: delivery outcomes + drift toward baseline + rest bonus
+    const deliveryBonus = (deliveredByRider.get(rider.id) ?? 0) * MORALE_PER_DELIVERY;
+    const failurePenalty = (failedByRider.get(rider.id) ?? 0) * MORALE_PER_FAILURE;
+    const drift =
+      rider.morale < MORALE_BASELINE
+        ? MORALE_DRIFT_PER_HOUR
+        : rider.morale > MORALE_BASELINE
+          ? -MORALE_DRIFT_PER_HOUR
+          : 0;
+    const restBonus = rider.status === 'resting' ? MORALE_REST_PER_HOUR : 0;
+    const newMorale = Math.max(
+      0,
+      Math.min(
+        100,
+        rider.morale + deliveryBonus + failurePenalty + (drift + restBonus) * elapsedHours,
+      ),
+    );
+
+    return { ...rider, energy: newEnergy, morale: newMorale, status: newStatus };
   });
 
   // 5. Deduct salary costs

@@ -50,6 +50,13 @@
       "when": 1773616290232,
       "tag": "0006_rider-pool",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1773661697124,
+      "tag": "0007_panoramic_mindworm",
+      "breakpoints": true
     }
   ]
 }

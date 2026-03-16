@@ -30,13 +30,19 @@
     goto('/login')
   }
 
-  const navItems = [
+  const baseNavItems = [
     { href: '/dashboard', label: 'Dashboard', icon: '📊' },
     { href: '/dashboard/riders', label: 'Riders', icon: '🏍️' },
     { href: '/dashboard/orders', label: 'Orders', icon: '📦' },
     { href: '/dashboard/zones', label: 'Zones', icon: '🗺️' },
     { href: '/dashboard/leaderboard', label: 'Board', icon: '🏆' },
   ]
+
+  const navItems = $derived(
+    Number(getProfile()?.level) >= 50
+      ? [...baseNavItems, { href: '/dashboard/api', label: 'API', icon: '🔌' }]
+      : baseNavItems,
+  )
 
   const themeIcons: Record<string, string> = { light: '☀️', dark: '🌙', system: '💻' }
   const themeOrder: Array<'light' | 'dark' | 'system'> = ['system', 'light', 'dark']

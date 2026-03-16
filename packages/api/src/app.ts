@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 
 import { authMiddleware } from './middleware/auth.ts';
+import { endpointTracker } from './middleware/endpoint-tracker.ts';
 import { hmacMiddleware } from './middleware/hmac.ts';
 import { rateLimiter } from './middleware/rate-limit.ts';
 import analyticsRoute from './routes/analytics.ts';
@@ -51,6 +52,7 @@ app.route('/api/auth', oauth);
 
 // Protected routes
 app.use('/api/*', authMiddleware);
+app.use('/api/*', endpointTracker);
 app.route('/api/player', player);
 app.route('/api/riders', ridersRoute);
 app.route('/api/orders', ordersRoute);

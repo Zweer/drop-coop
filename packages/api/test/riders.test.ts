@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createMockDb, createTestToken, mockInsertReturning, mockUpdateWhere } from './helpers.ts';
+import {
+  createMockDb,
+  createTestToken,
+  mockInsertReturning,
+  mockUpdateWhere,
+  trackerInsertNoop,
+} from './helpers.ts';
 
 const mockDb = createMockDb();
 vi.mock('../src/db/index.ts', () => ({ db: mockDb }));
@@ -101,6 +107,7 @@ describe('GET /api/riders/pool', () => {
         expiresAt: new Date(Date.now() + 3600000),
       },
     ];
+    mockDb.insert.mockReturnValueOnce(trackerInsertNoop); // endpoint tracker
     mockDb.insert.mockReturnValueOnce(mockInsertReturning(generated));
 
     const res = await get('/api/riders/pool');
@@ -129,6 +136,7 @@ describe('POST /api/riders/hire', () => {
     mockDb.query.riderPool.findFirst.mockResolvedValueOnce(poolEntry);
     mockDb.query.players.findFirst.mockResolvedValueOnce({ id: PLAYER_ID, money: 500 });
     mockDb.update.mockReturnValueOnce(mockUpdateWhere()); // player money
+    mockDb.insert.mockReturnValueOnce(trackerInsertNoop); // endpoint tracker
     mockDb.insert.mockReturnValueOnce(
       mockInsertReturning([{ id: 'r1', ...poolEntry, playerId: PLAYER_ID }]),
     );

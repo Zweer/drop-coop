@@ -150,10 +150,15 @@ export async function runTick(playerId: string): Promise<{
   // Persist changed riders
   for (const rider of result.riders) {
     const original = playerRiders.find((r) => r.id === rider.id);
-    if (original && (original.energy !== rider.energy || original.status !== rider.status)) {
+    if (
+      original &&
+      (original.energy !== rider.energy ||
+        original.status !== rider.status ||
+        original.morale !== rider.morale)
+    ) {
       await db
         .update(riders)
-        .set({ energy: rider.energy, status: rider.status })
+        .set({ energy: rider.energy, status: rider.status, morale: rider.morale })
         .where(eq(riders.id, rider.id));
     }
   }
@@ -169,48 +174,36 @@ export async function runTick(playerId: string): Promise<{
     }
   }
 
+  // Load unlocked zones once — used for order generation, zone fees, and events
+  const unlockedPZ = await db.query.playerZones.findMany({
+    where: eq(playerZones.playerId, playerId),
+  });
+  const zoneIds = unlockedPZ.map((pz) => pz.zoneId);
+  const unlockedZones =
+    zoneIds.length > 0 ? await db.query.zones.findMany({ where: inArray(zones.id, zoneIds) }) : [];
+
   // Generate new orders with reward multiplier from engine
   let newOrders: Order[] = [];
-  if (result.newOrderCount > 0) {
-    const unlockedPZ = await db.query.playerZones.findMany({
-      where: eq(playerZones.playerId, playerId),
-    });
-    if (unlockedPZ.length > 0) {
-      const zoneIds = unlockedPZ.map((pz) => pz.zoneId);
-      const unlockedZones = await db.query.zones.findMany({
-        where: inArray(zones.id, zoneIds),
-      });
-      if (unlockedZones.length > 0) {
-        const orderData = generateOrders(
-          playerId,
-          result.newOrderCount,
-          unlockedZones,
-          result.rewardMultiplier,
-        );
-        const inserted = await db.insert(orders).values(orderData).returning();
-        newOrders = inserted.map(toGameOrder);
-      }
-    }
+  if (result.newOrderCount > 0 && unlockedZones.length > 0) {
+    const orderData = generateOrders(
+      playerId,
+      result.newOrderCount,
+      unlockedZones,
+      result.rewardMultiplier,
+    );
+    const inserted = await db.insert(orders).values(orderData).returning();
+    newOrders = inserted.map(toGameOrder);
   }
 
   // Deduct zone fees
   let zoneFees = 0;
-  if (elapsedHours > 0) {
-    const unlockedPZ = await db.query.playerZones.findMany({
-      where: eq(playerZones.playerId, playerId),
-    });
-    if (unlockedPZ.length > 0) {
-      const zoneIds = unlockedPZ.map((pz) => pz.zoneId);
-      const unlockedZones = await db.query.zones.findMany({
-        where: inArray(zones.id, zoneIds),
-      });
-      zoneFees = unlockedZones.reduce((sum, z) => sum + z.hourlyFee * elapsedHours, 0);
-      if (zoneFees > 0) {
-        await db
-          .update(players)
-          .set({ money: result.player.money - zoneFees })
-          .where(eq(players.id, playerId));
-      }
+  if (elapsedHours > 0 && unlockedZones.length > 0) {
+    zoneFees = unlockedZones.reduce((sum, z) => sum + z.hourlyFee * elapsedHours, 0);
+    if (zoneFees > 0) {
+      await db
+        .update(players)
+        .set({ money: result.player.money - zoneFees })
+        .where(eq(players.id, playerId));
     }
   }
 
@@ -225,15 +218,9 @@ export async function runTick(playerId: string): Promise<{
       const [minH, maxH] = def.durationRange;
       const durationMs = (minH + Math.random() * (maxH - minH)) * 60 * 60 * 1000;
 
-      // Pick a random unlocked zone for zone-specific events
       let zoneId: string | null = null;
-      if (def.zoneSpecific) {
-        const unlockedPZ = await db.query.playerZones.findMany({
-          where: eq(playerZones.playerId, playerId),
-        });
-        if (unlockedPZ.length > 0) {
-          zoneId = unlockedPZ[Math.floor(Math.random() * unlockedPZ.length)].zoneId;
-        }
+      if (def.zoneSpecific && unlockedPZ.length > 0) {
+        zoneId = unlockedPZ[Math.floor(Math.random() * unlockedPZ.length)].zoneId;
       }
 
       const [inserted] = await db

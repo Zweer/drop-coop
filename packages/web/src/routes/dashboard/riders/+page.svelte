@@ -68,6 +68,20 @@
     }
   }
 
+  async function toggleRest(riderId: string, riderName: string) {
+    if (busy) return
+    busy = true
+    try {
+      const result = await api.riders.rest(riderId)
+      toast.success(`${riderName}: ${result.status === 'resting' ? 'resting 😴' : 'back to work ✅'}`)
+      await refreshRiders()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed')
+    } finally {
+      busy = false
+    }
+  }
+
   let canUpgrade = $derived(Number(getProfile()?.level) >= 5)
 
   const stats = [
@@ -141,9 +155,16 @@
           <CardContent class="pt-6 space-y-3">
             <div class="flex items-center justify-between">
               <p class="font-medium text-lg">{rider.name}</p>
-              <Badge variant={rider.status === 'idle' ? 'default' : rider.status === 'delivering' ? 'secondary' : 'outline'}>
-                {rider.status === 'idle' ? '✅ Idle' : rider.status === 'delivering' ? '🚴 Delivering' : '😴 Resting'}
-              </Badge>
+              <div class="flex items-center gap-2">
+                {#if rider.status !== 'delivering'}
+                  <Button variant="ghost" size="sm" disabled={busy} onclick={() => toggleRest(rider.id as string, rider.name as string)}>
+                    {rider.status === 'resting' ? '⏰ Wake' : '😴 Rest'}
+                  </Button>
+                {/if}
+                <Badge variant={rider.status === 'idle' ? 'default' : rider.status === 'delivering' ? 'secondary' : 'outline'}>
+                  {rider.status === 'idle' ? '✅ Idle' : rider.status === 'delivering' ? '🚴 Delivering' : '😴 Resting'}
+                </Badge>
+              </div>
             </div>
 
             <div class="grid grid-cols-4 gap-2 text-center">
@@ -174,6 +195,14 @@
                 <span>{Number(rider.energy).toFixed(0)}%</span>
               </div>
               <Progress value={Number(rider.energy)} class="h-2" />
+            </div>
+
+            <div class="space-y-1">
+              <div class="flex justify-between text-xs text-muted-foreground">
+                <span>😊 Morale</span>
+                <span>{Number(rider.morale).toFixed(0)}%</span>
+              </div>
+              <Progress value={Number(rider.morale)} class="h-2" />
             </div>
 
             <p class="text-xs text-muted-foreground">💰 Salary: €{rider.salary}/hr</p>

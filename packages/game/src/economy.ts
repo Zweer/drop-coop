@@ -55,13 +55,15 @@ export function calculateMaxOrders(player: Pick<Player, 'level'>): number {
  * Chance of delivery failure (0-1) based on rider stats.
  * - Low reliability → higher base failure
  * - Low city knowledge → chance of getting lost
+ * - Low morale → less careful
  */
 export function calculateFailureChance(
-  rider: Pick<Rider, 'reliability' | 'cityKnowledge'>,
+  rider: Pick<Rider, 'reliability' | 'cityKnowledge' | 'morale'>,
 ): number {
   const reliabilityRisk = (10 - rider.reliability) * 0.02;
   const knowledgeRisk = (10 - rider.cityKnowledge) * 0.01;
-  return Math.min(0.5, reliabilityRisk + knowledgeRisk);
+  const moraleRisk = rider.morale < 30 ? (30 - rider.morale) * 0.005 : 0;
+  return Math.min(0.5, reliabilityRisk + knowledgeRisk + moraleRisk);
 }
 
 /** Deterministic hash of a string to a number in [0, 1). */

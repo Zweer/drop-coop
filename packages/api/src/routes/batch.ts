@@ -98,6 +98,9 @@ batchRoute.post('/upgrade', async (c) => {
   const results: { riderId: string; stat: string; newValue: number; cost: number }[] = [];
   const errors: { riderId: string; error: string }[] = [];
 
+  // Validate all upgrades first, then apply atomically
+  const pending: { riderId: string; stat: string; newValue: number; cost: number }[] = [];
+
   for (const { riderId, stat } of body.data.upgrades) {
     const rider = await db.query.riders.findFirst({
       where: and(eq(riders.id, riderId), eq(riders.playerId, playerId)),
@@ -120,16 +123,20 @@ batchRoute.post('/upgrade', async (c) => {
     }
 
     money -= cost;
-    const newValue = current + 1;
-    await db
-      .update(riders)
-      .set({ [stat]: newValue })
-      .where(eq(riders.id, riderId));
-    results.push({ riderId, stat, newValue, cost });
+    pending.push({ riderId, stat, newValue: current + 1, cost });
   }
 
-  if (money !== player.money) {
-    await db.update(players).set({ money }).where(eq(players.id, playerId));
+  if (pending.length > 0) {
+    await db.transaction(async (tx) => {
+      for (const { riderId, stat, newValue } of pending) {
+        await tx
+          .update(riders)
+          .set({ [stat]: newValue })
+          .where(eq(riders.id, riderId));
+      }
+      await tx.update(players).set({ money }).where(eq(players.id, playerId));
+    });
+    results.push(...pending);
   }
 
   return c.json({ results, errors, remainingMoney: money });

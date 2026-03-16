@@ -1,4 +1,5 @@
 export * from './auth-accounts.ts';
+export * from './discovered-endpoints.ts';
 export * from './events.ts';
 export * from './orders.ts';
 export * from './players.ts';

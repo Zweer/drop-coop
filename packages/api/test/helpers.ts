@@ -27,6 +27,13 @@ export function mockUpdateWhere() {
   };
 }
 
+export const trackerInsertNoop = {
+  values: vi.fn().mockReturnValue({
+    returning: vi.fn().mockResolvedValue([]),
+    onConflictDoNothing: vi.fn().mockResolvedValue(undefined),
+  }),
+};
+
 export function createMockDb() {
   return {
     query: {
@@ -38,8 +45,9 @@ export function createMockDb() {
       playerZones: { findFirst: vi.fn(), findMany: vi.fn() },
       riderPool: { findFirst: vi.fn(), findMany: vi.fn() },
       zones: { findFirst: vi.fn(), findMany: vi.fn() },
+      discoveredEndpoints: { findFirst: vi.fn(), findMany: vi.fn() },
     },
-    insert: vi.fn(),
+    insert: vi.fn().mockReturnValue(trackerInsertNoop),
     update: vi.fn(),
     delete: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) }),
   };

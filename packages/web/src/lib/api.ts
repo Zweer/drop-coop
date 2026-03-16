@@ -136,6 +136,10 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ stat }),
       }),
+    rest: (riderId: string) =>
+      request<{ riderId: string; status: string }>(`/riders/${riderId}/rest`, {
+        method: 'POST',
+      }),
   },
   orders: {
     list: () => request<Record<string, unknown>[]>('/orders'),
@@ -159,6 +163,8 @@ export const api = {
   },
   leaderboard: {
     top: () => request<Record<string, unknown>[]>('/leaderboard'),
+    hackers: () => request<Record<string, unknown>[]>('/leaderboard/hackers'),
+    explorers: () => request<Record<string, unknown>[]>('/leaderboard/explorers'),
   },
   batch: {
     assign: async (assignments: { riderId: string; orderId: string }[]) => {

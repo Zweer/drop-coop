@@ -147,4 +147,20 @@ ridersRoute.post('/:id/upgrade', async (c) => {
   return c.json({ riderId, stat, oldValue: currentValue, newValue: currentValue + 1, cost });
 });
 
+ridersRoute.post('/:id/rest', async (c) => {
+  const playerId = c.get('playerId');
+  const riderId = c.req.param('id');
+
+  const rider = await db.query.riders.findFirst({
+    where: and(eq(riders.id, riderId), eq(riders.playerId, playerId)),
+  });
+  if (!rider) return c.json({ error: 'Rider not found' }, 404);
+  if (rider.status === 'delivering') return c.json({ error: 'Rider is delivering' }, 400);
+
+  const newStatus = rider.status === 'resting' ? 'idle' : 'resting';
+  await db.update(riders).set({ status: newStatus }).where(eq(riders.id, riderId));
+
+  return c.json({ riderId, status: newStatus });
+});
+
 export default ridersRoute;
