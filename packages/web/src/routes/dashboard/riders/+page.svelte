@@ -194,7 +194,7 @@
                 <span>🔋 Energy</span>
                 <span>{Number(rider.energy).toFixed(0)}%</span>
               </div>
-              <Progress value={Number(rider.energy)} class="h-2" />
+              <Progress value={Number(rider.energy)} class="h-2" aria-label="Rider energy" />
             </div>
 
             <div class="space-y-1">
@@ -202,7 +202,7 @@
                 <span>😊 Morale</span>
                 <span>{Number(rider.morale).toFixed(0)}%</span>
               </div>
-              <Progress value={Number(rider.morale)} class="h-2" />
+              <Progress value={Number(rider.morale)} class="h-2" aria-label="Rider morale" />
             </div>
 
             <p class="text-xs text-muted-foreground">💰 Salary: €{rider.salary}/hr</p>

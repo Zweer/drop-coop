@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 
 const uid = () => `smoke${Date.now()}${Math.random().toString(36).slice(2, 6)}`;
@@ -203,4 +204,41 @@ test('navigate through all main pages', async ({ page }) => {
   await expect(page.getByText('Loading')).not.toBeVisible({ timeout: 10_000 });
   await page.getByRole('link', { name: 'drop-coop' }).click();
   await expect(page.getByText('💰 Money')).toBeVisible();
+});
+
+// --- Accessibility ---
+
+test('a11y: landing page', async ({ page }) => {
+  await page.goto('/');
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations).toEqual([]);
+});
+
+test('a11y: login page', async ({ page }) => {
+  await page.goto('/login');
+  await page.waitForLoadState('networkidle');
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations).toEqual([]);
+});
+
+test('a11y: dashboard', async ({ page }) => {
+  await register(page);
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations).toEqual([]);
+});
+
+test('a11y: riders page', async ({ page }) => {
+  await register(page);
+  await page.getByRole('link', { name: 'Riders' }).first().click();
+  await expect(page.locator('h2', { hasText: 'Riders' })).toBeVisible();
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations).toEqual([]);
+});
+
+test('a11y: zones page', async ({ page }) => {
+  await register(page);
+  await page.getByRole('link', { name: 'Zones' }).first().click();
+  await expect(page.locator('h2', { hasText: 'Zones' })).toBeVisible();
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations).toEqual([]);
 });

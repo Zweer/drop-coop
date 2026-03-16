@@ -130,7 +130,7 @@
 <div class="space-y-5">
   <!-- Welcome / Progression -->
   {#if isNewPlayer && riders.length === 0}
-    <Card class="border-primary/20 bg-primary/5">
+    <Card class="border-primary/20">
       <CardContent class="py-5">
         <p class="text-lg font-bold mb-1">🚲 Welcome to your co-op!</p>
         <p class="text-sm text-muted-foreground">
@@ -140,7 +140,7 @@
       </CardContent>
     </Card>
   {:else if progression}
-    <Card class="border-primary/20 bg-primary/5">
+    <Card class="border-primary/20">
       <CardContent class="py-4">
         <div class="flex items-center justify-between mb-2">
           <span class="font-bold text-lg">📈 Level {progression.level}</span>
@@ -151,7 +151,7 @@
           {/if}
         </div>
         <div class="flex items-center gap-3">
-          <Progress value={Number(progression.progressPercent)} class="h-2.5 flex-1" />
+          <Progress value={Number(progression.progressPercent)} class="h-2.5 flex-1" aria-label="Level progress" />
           <span class="text-xs text-muted-foreground w-20 text-right">
             {progression.totalDeliveries}/{progression.deliveriesForNextLevel}
           </span>
@@ -253,7 +253,7 @@
               <span>🏍️ {rider?.name ?? '?'} → <span class="font-medium">€{Number(order.reward).toFixed(2)}</span></span>
               <span class="text-xs font-mono text-muted-foreground">{formatRemaining(etaMs)}</span>
             </div>
-            <Progress value={pct} class="h-1.5" />
+            <Progress value={pct} class="h-1.5" aria-label="Delivery progress" />
           </div>
         {/each}
       </CardContent>
@@ -281,7 +281,7 @@
               </div>
             </div>
             <div class="flex items-center gap-2 w-28">
-              <Progress value={Number(rider.energy)} class="h-1.5" />
+              <Progress value={Number(rider.energy)} class="h-1.5" aria-label="Rider energy" />
               <span class="text-xs text-muted-foreground w-8">{Number(rider.energy).toFixed(0)}%</span>
             </div>
           </div>

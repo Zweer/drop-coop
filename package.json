@@ -45,11 +45,11 @@
     "prepare": "lefthook install",
     "pretest": "npm run build",
     "test": "vitest run",
-    "test:smoke": "npx playwright test",
     "posttest": "npm run clean",
     "pretest:coverage": "npm run build",
     "test:coverage": "vitest run --coverage",
-    "posttest:coverage": "npm run clean"
+    "posttest:coverage": "npm run clean",
+    "test:smoke": "npx playwright test"
   },
   "commitlint": {
     "extends": [
@@ -57,6 +57,7 @@
     ]
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.1",
     "@biomejs/biome": "^2.4.6",
     "@commitlint/cli": "^20.4.4",
     "@commitlint/config-conventional": "^20.4.4",

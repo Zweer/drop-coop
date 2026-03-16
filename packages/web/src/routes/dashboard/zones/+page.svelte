@@ -55,7 +55,7 @@
       {@const unlocked = zone.unlocked as boolean}
       {@const canUnlock = !unlocked && playerLevel >= Number(zone.requiredLevel) && playerMoney >= Number(zone.unlockCost)}
       {@const levelLocked = !unlocked && playerLevel < Number(zone.requiredLevel)}
-      <Card class={unlocked ? 'border-primary/20' : levelLocked ? 'opacity-60' : ''}>
+      <Card class={unlocked ? 'border-primary/20' : levelLocked ? 'border-dashed' : ''}>
         <CardContent class="pt-6 space-y-3">
           <div class="flex items-center justify-between">
             <span class="font-bold text-lg">{zone.name}</span>
@@ -72,14 +72,14 @@
             <div>
               <p class="text-xs text-muted-foreground">Demand</p>
               <div class="flex items-center gap-2">
-                <Progress value={Number(zone.demandLevel) * 10} class="h-1.5 w-16" />
+                <Progress value={Number(zone.demandLevel) * 10} class="h-1.5 w-16" aria-label="Zone demand level" />
                 <span class="text-xs">{zone.demandLevel}/10</span>
               </div>
             </div>
             <div>
               <p class="text-xs text-muted-foreground">Traffic</p>
               <div class="flex items-center gap-2">
-                <Progress value={Number(zone.trafficDensity) * 10} class="h-1.5 w-16" />
+                <Progress value={Number(zone.trafficDensity) * 10} class="h-1.5 w-16" aria-label="Zone traffic density" />
                 <span class="text-xs">{zone.trafficDensity}/10</span>
               </div>
             </div>

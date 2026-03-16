@@ -138,7 +138,7 @@ describe('POST /api/riders/hire', () => {
     mockDb.update.mockReturnValueOnce(mockUpdateWhere()); // player money
     mockDb.insert.mockReturnValueOnce(trackerInsertNoop); // endpoint tracker
     mockDb.insert.mockReturnValueOnce(
-      mockInsertReturning([{ id: 'r1', ...poolEntry, playerId: PLAYER_ID }]),
+      mockInsertReturning([{ ...poolEntry, id: 'r1', playerId: PLAYER_ID }]),
     );
     mockDb.delete.mockReturnValueOnce({ where: vi.fn().mockResolvedValue(undefined) });
 

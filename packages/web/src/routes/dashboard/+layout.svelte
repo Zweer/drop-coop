@@ -82,7 +82,7 @@
           <span class="text-sm text-muted-foreground">Lv.{getProfile()?.level}</span>
           {#if progression}
             <div class="w-16" title={nextMilestone ? `Next: Lv.${nextMilestone.level} — ${nextMilestone.description}` : 'Max level reached'}>
-              <Progress value={Number(progression.progressPercent)} class="h-1.5" />
+              <Progress value={Number(progression.progressPercent)} class="h-1.5" aria-label="Level progress" />
             </div>
           {/if}
         </div>
@@ -94,6 +94,7 @@
     </header>
 
     <main class="flex-1 p-4 sm:p-6 max-w-5xl mx-auto w-full">
+      <h1 class="sr-only">drop-coop Dashboard</h1>
       {@render children?.()}
     </main>
 

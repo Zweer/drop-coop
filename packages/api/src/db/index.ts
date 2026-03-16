@@ -23,7 +23,7 @@ if (process.env.USE_PGLITE) {
     }
   }
 
-  db = drizzle({ client, schema }) as typeof db;
+  db = drizzle({ client, schema }) as unknown as typeof db;
 } else {
   for (const p of [resolve(import.meta.dirname, '../../../../.env.local'), '.env.local']) {
     if (existsSync(p)) {

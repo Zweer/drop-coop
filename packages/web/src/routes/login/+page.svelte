@@ -50,10 +50,10 @@
   }
 </script>
 
-<div class="flex min-h-screen items-center justify-center">
+<main class="flex min-h-screen items-center justify-center">
   <Card class="w-full max-w-sm">
     <CardHeader>
-      <CardTitle class="text-2xl">🚲 {isLogin ? 'Login' : 'Register'}</CardTitle>
+      <CardTitle class="text-2xl"><h1>🚲 {isLogin ? 'Login' : 'Register'}</h1></CardTitle>
       <CardDescription>
         {isLogin ? 'Sign in to your co-op' : 'Start your delivery co-op'}
       </CardDescription>
@@ -104,4 +104,4 @@
       </form>
     </CardContent>
   </Card>
-</div>
+</main>
