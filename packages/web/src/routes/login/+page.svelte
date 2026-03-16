@@ -32,7 +32,8 @@
     }
   })
 
-  async function handleSubmit() {
+  async function handleSubmit(e: SubmitEvent) {
+    e.preventDefault()
     error = ''
     loading = true
     try {

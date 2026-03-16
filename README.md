@@ -107,7 +107,9 @@ Open http://localhost:5173 and start playing.
 ```bash
 npm install
 npm run dev          # Start API + frontend
-npm test             # Run tests
+npm test             # Run unit + API E2E tests (Vitest)
+npm run test:smoke   # Run browser smoke tests (Playwright)
+npm run test:coverage # Coverage report
 ```
 
 ## Roadmap

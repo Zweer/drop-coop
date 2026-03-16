@@ -1,18 +1,19 @@
 # Testing Strategy
 
-## Test Framework
+## Frameworks
 
-### Vitest
-- All tests use **Vitest**
-- Run tests: `npm test`
-- Coverage: `npm run test:coverage`
+| Framework | Scope | Command |
+|-----------|-------|---------|
+| **Vitest** | Unit + API E2E | `npm test` |
+| **Playwright** | Browser smoke tests | `npm run test:smoke` |
+
+Coverage: `npm run test:coverage` (Vitest only, v8 provider)
 
 ## Test Types
 
-### Unit Tests — Game Logic
-- Test game engine functions in isolation
-- Pure functions: input → output, no side effects
-- Economy formulas, rider assignment, order generation
+### Unit Tests — Game Logic (`packages/game/test/`)
+
+Pure function tests for the game engine, economy, events, pool, zones.
 
 ```typescript
 describe('Economy', () => {
@@ -23,64 +24,68 @@ describe('Economy', () => {
 })
 ```
 
-### Integration Tests — API Endpoints
-- Test API routes with a real PostgreSQL test database
-- Verify request/response format
-- Test authentication and authorization
+Files: `engine.test.ts`, `economy.test.ts`, `events.test.ts`, `pool.test.ts`, `zones.test.ts`
+
+### E2E Tests — API Endpoints (`packages/api/test/`)
+
+Full API tests using Hono's `app.request()` with **PGlite** (in-memory Postgres). Each test file gets a fresh database with migrations applied.
 
 ```typescript
-describe('POST /api/orders/assign', () => {
-  it('should assign rider to order', async () => {
-    const res = await app.request('/api/orders/assign', {
-      method: 'POST',
-      body: JSON.stringify({ riderId: '1', orderId: '2' }),
-    })
-    expect(res.status).toBe(200)
-  })
-})
+const { db, close } = await createTestDb()  // PGlite
+vi.doMock('../src/db/index.ts', () => ({ db }))
+const { app } = await import('../src/app.ts')
 ```
 
-### Hacking Stage Tests
-- Each stage has tests verifying the protection works
-- Tests that the "intended bypass" also works
-- Ensures stages don't break normal gameplay
+Helpers in `e2e-helpers.ts`: `createTestDb()`, `hmacSign()`, `registerPlayer()`, `createClient()`.
 
-### E2E Tests
-- Full game flow: register → hire rider → accept order → deliver → get paid
-- Bot simulation: automated play through API
+Files:
+- `e2e.test.ts` — Full game loop (register → hire → assign → deliver → level up)
+- `e2e-edge-cases.test.ts` — Auth, order, zone, upgrade, hire errors
+- `e2e-hacking.test.ts` — HMAC batch/analytics, hacker/explorer leaderboard
+- `e2e-mechanics.test.ts` — Energy, morale, salary, order generation, delivery, events
+- `e2e-extended.test.ts` — Validation, CORS, rate limiting, multi-player
+
+### Smoke Tests — Browser (`packages/web/test/`)
+
+Playwright tests against the real SvelteKit app with PGlite backend. Tests the full browser experience: SSR, hydration, navigation, form submission.
+
+```bash
+npm run test:smoke  # starts SvelteKit dev server with USE_PGLITE=1
+```
+
+The dev server uses PGlite instead of Neon when `USE_PGLITE=1` is set (configured in `packages/api/src/db/index.ts`). Rate limits are relaxed in this mode.
+
+Coverage: landing page, auth flows, dashboard, riders (hire/rest), orders, zones, leaderboard tabs, theme toggle, navigation.
+
+**SvelteKit hydration caveat**: Playwright clicks elements as soon as they appear in the DOM, but Svelte event handlers aren't attached until hydration completes. Tests must wait for hydration before interacting (e.g., wait for a reactive element to appear after a state change).
+
+## Database in Tests
+
+- **Vitest E2E**: PGlite via `createTestDb()` — each test file gets an isolated in-memory DB
+- **Playwright smoke**: PGlite via `USE_PGLITE=1` env var — single DB shared across all tests, unique usernames per test
+
+No real Postgres needed for any test.
+
+## Coverage
+
+Config in `vitest.config.ts`:
+- **Included**: `packages/api/src/**`, `packages/game/src/**`
+- **Excluded**: `oauth.ts`, `models/**`, `db/index.ts`, `index.ts`, `types.ts`
+- **Target**: 100% lines (achieved), ~93% branches (v8 implicit branches)
+
+`/* c8 ignore */` used only for genuinely unreachable code:
+- `!player` guards after auth middleware
+- Timer-based cleanup (`setInterval`)
+- Random event generation (tested in game unit tests)
+- Data mapping functions (pure type conversions)
 
 ## Mocking
 
 ### When to Mock
-- Time-dependent operations (use `vi.useFakeTimers()`)
+- Time-dependent operations (`vi.useFakeTimers()`)
 - Random number generation (seed for deterministic tests)
 
 ### When NOT to Mock
-- Database (use a test database or mock the Drizzle layer)
-- Game logic (test the real implementation)
-- API routes (test with real Hono app instance)
-
-## Test Data
-
-### Deterministic
-- Fixed seeds for random generation
-- Fixed timestamps
-- Predictable game states
-
-### Fixtures
-```typescript
-const mockRider = {
-  id: 'rider-1',
-  name: 'Test Rider',
-  speed: 5,
-  reliability: 8,
-  cityKnowledge: 3,
-}
-
-const mockOrder = {
-  id: 'order-1',
-  pickup: { lat: 45.464, lng: 9.190 },
-  dropoff: { lat: 45.470, lng: 9.195 },
-  urgency: 'normal' as const,
-}
-```
+- Database — use PGlite (real SQL, in-memory)
+- Game logic — test the real implementation
+- API routes — test with real Hono app instance

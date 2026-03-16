@@ -39,11 +39,13 @@ app.use(
   }),
 );
 
-// Strict rate limit on auth (5 req / 15 min per IP)
-app.use('/api/auth/*', rateLimiter({ max: 5, windowMs: 15 * 60 * 1000 }));
+// Strict rate limit on auth (5 req / 15 min per IP, relaxed in test)
+const authRateMax = process.env.USE_PGLITE ? 1000 : 5;
+app.use('/api/auth/*', rateLimiter({ max: authRateMax, windowMs: 15 * 60 * 1000 }));
 
-// General rate limit on all API (60 req / min per IP)
-app.use('/api/*', rateLimiter({ max: 60, windowMs: 60 * 1000 }));
+// General rate limit on all API (60 req / min per IP, relaxed in test)
+const generalRateMax = process.env.USE_PGLITE ? 1000 : 60;
+app.use('/api/*', rateLimiter({ max: generalRateMax, windowMs: 60 * 1000 }));
 
 app.get('/api/health', (c) => c.json({ status: 'ok' }));
 

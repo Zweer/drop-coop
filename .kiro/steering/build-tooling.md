@@ -121,8 +121,9 @@ npm run dev                  # Both (concurrently)
 
 ### Testing
 ```bash
-npm test                     # Run all tests
+npm test                     # Run all Vitest tests (unit + API E2E)
 npm run test:coverage        # With coverage
+npm run test:smoke           # Playwright browser smoke tests (PGlite)
 ```
 
 ### Database
