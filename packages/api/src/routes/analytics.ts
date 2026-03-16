@@ -8,7 +8,7 @@ import {
   seededRandom,
   ZONES,
 } from '@drop-coop/game';
-import { and, eq, gt, sql } from 'drizzle-orm';
+import { and, eq, gt, inArray, sql } from 'drizzle-orm';
 import { Hono } from 'hono';
 
 import { db } from '../db/index.ts';
@@ -30,9 +30,7 @@ analytics.get('/demand', async (c) => {
   });
   const zoneIds = unlockedPZ.map((pz) => pz.zoneId);
   const unlockedZones =
-    zoneIds.length > 0
-      ? await db.query.zones.findMany({ where: sql`${zones.id} = ANY(${zoneIds})` })
-      : [];
+    zoneIds.length > 0 ? await db.query.zones.findMany({ where: inArray(zones.id, zoneIds) }) : [];
 
   const baseRate = calculateOrderRate(player);
   const totalDemand = unlockedZones.reduce((s, z) => s + z.demandLevel, 0) || 1;
@@ -116,7 +114,7 @@ analytics.get('/riders', async (c) => {
   });
 
   const completedOrders = await db.query.orders.findMany({
-    where: and(eq(orders.playerId, playerId), sql`${orders.status} IN ('delivered', 'failed')`),
+    where: and(eq(orders.playerId, playerId), inArray(orders.status, ['delivered', 'failed'])),
   });
 
   const stats = playerRiders.map((rider) => {
