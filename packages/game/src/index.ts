@@ -1,3 +1,5 @@
+export type { AchievementDefinition, AchievementInput } from './achievements.js';
+export { ACHIEVEMENTS, checkAchievements } from './achievements.js';
 export type {
   EquipmentBudget,
   PayStructure,

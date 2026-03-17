@@ -1,3 +1,4 @@
+export * from './achievements.ts';
 export * from './auth-accounts.ts';
 export * from './coop-policies.ts';
 export * from './discovered-endpoints.ts';

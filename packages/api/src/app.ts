@@ -6,6 +6,7 @@ import { endpointTracker } from './middleware/endpoint-tracker.ts';
 import { hmacMiddleware } from './middleware/hmac.ts';
 import { rateLimiter } from './middleware/rate-limit.ts';
 import { timingGuard } from './middleware/timing-guard.ts';
+import achievementsRoute from './routes/achievements.ts';
 import analyticsRoute from './routes/analytics.ts';
 import auth from './routes/auth.ts';
 import batchRoute from './routes/batch.ts';
@@ -72,6 +73,7 @@ app.route('/api/zones', zonesRoute);
 app.route('/api/events', eventsRoute);
 app.route('/api/coop', coopRoute);
 app.route('/api/leaderboard', leaderboardRoute);
+app.route('/api/achievements', achievementsRoute);
 
 // Stage 2: HMAC-protected bulk endpoints
 app.use('/api/batch/*', hmacMiddleware);

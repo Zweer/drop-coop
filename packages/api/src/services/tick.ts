@@ -1,6 +1,7 @@
 import type { EventType, GameEvent, Order, OrderUrgency, Player, Rider } from '@drop-coop/game';
 import {
   CITIES,
+  checkAchievements,
   getEventDefinition,
   mergeEventEffects,
   mergePolicyEffects,
@@ -12,7 +13,9 @@ import { and, eq, gt, inArray } from 'drizzle-orm';
 
 import { db } from '../db/index.ts';
 import {
+  achievements,
   coopPolicies,
+  discoveredEndpoints,
   events,
   orders,
   players,
@@ -71,6 +74,7 @@ export async function runTick(playerId: string): Promise<{
   events: GameEvent[];
   revenue: number;
   costs: number;
+  newAchievements: string[];
 }> {
   const now = new Date();
 
@@ -279,10 +283,59 @@ export async function runTick(playerId: string): Promise<{
   const finalPlayer =
     zoneFees > 0 ? { ...result.player, money: result.player.money - zoneFees } : result.player;
 
+  // Check achievements
+  /* c8 ignore start -- achievement check queries */
+  const [existingAch, endpointRows] = await Promise.all([
+    db
+      .select({ achievementId: achievements.achievementId })
+      .from(achievements)
+      .where(eq(achievements.playerId, playerId)),
+    db
+      .select({ endpoint: discoveredEndpoints.endpoint })
+      .from(discoveredEndpoints)
+      .where(eq(discoveredEndpoints.playerId, playerId)),
+  ]);
+
+  const alreadyUnlocked = new Set(existingAch.map((a) => a.achievementId));
+  const endpointSet = new Set(endpointRows.map((e) => e.endpoint));
+  const distinctCities = new Set(unlockedZones.map((z) => z.city));
+  const maxStat = playerRiders.reduce(
+    (max, r) => Math.max(max, r.speed, r.reliability, r.cityKnowledge, r.stamina),
+    0,
+  );
+
+  const newAch = checkAchievements(
+    {
+      totalDeliveries: finalPlayer.totalDeliveries,
+      money: finalPlayer.money,
+      totalProfit: finalPlayer.totalProfit,
+      level: finalPlayer.level,
+      riderCount: playerRiders.length,
+      unlockedZoneCount: unlockedZones.length,
+      unlockedCityCount: distinctCities.size,
+      discoveredEndpoints: endpointRows.length,
+      maxRiderStat: maxStat,
+      hasUsedBatch: endpointSet.has('POST /api/batch'),
+      hasUsedAnalytics: [...endpointSet].some((e) => e.startsWith('GET /api/analytics')),
+      hasUsedPipeline: endpointSet.has('POST /api/pipeline'),
+      hasVoted: activePolicies.length > 0,
+    },
+    alreadyUnlocked,
+  );
+
+  if (newAch.length > 0) {
+    await db
+      .insert(achievements)
+      .values(newAch.map((id) => ({ playerId, achievementId: id })))
+      .onConflictDoNothing();
+  }
+  /* c8 ignore stop */
+
   return {
     ...result,
     player: finalPlayer,
     orders: [...result.orders, ...newOrders],
     events: currentEvents,
+    newAchievements: newAch,
   };
 }

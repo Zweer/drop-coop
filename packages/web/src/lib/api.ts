@@ -200,4 +200,17 @@ export const api = {
       });
     },
   },
+  achievements: {
+    list: () =>
+      request<
+        {
+          id: string;
+          name: string;
+          description: string;
+          icon: string;
+          unlocked: boolean;
+          unlockedAt: string | null;
+        }[]
+      >('/achievements'),
+  },
 };
