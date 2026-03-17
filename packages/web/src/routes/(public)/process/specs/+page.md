@@ -4,46 +4,65 @@ title: Requirements & Specs
 
 # 📋 Requirements & Specs
 
-drop-coop started with a clear set of specifications before any code was written. All specs live in `.kiro/specs/` and serve as the source of truth throughout development.
+## The idea
 
-## Three Spec Documents
+Before any code was written, we wrote down exactly what we wanted to build. Not a vague idea — a structured document covering the game, the hacking layer, the business model, and the technical architecture.
 
-### 1. Core Requirements (`v1/requirements.md`)
+This matters because the AI agent reads these specs at the start of every session. They're the "shared understanding" between human and machine. Without them, the AI would guess. With them, it builds exactly what was designed.
 
-The main spec defines:
-- **Project identity** — name, tagline, genre, platform, license
-- **Two audiences** — casual players (click to play) and hackers (reverse-engineer the API)
-- **Functional requirements** — riders, orders, economy, zones, events, cooperative mechanics
-- **API surface** — every endpoint the game exposes
-- **Hacking stages** — 8 progressive security layers (5 implemented)
-- **Implementation phases** — MVP → Core → Depth → Polish → Community
-- **Non-functional requirements** — serverless, fast, responsive, free tier
+## Three documents, three perspectives
 
-### 2. Game Design (`game-design/requirements.md`)
+We created three specification documents, each serving a different purpose:
 
-Deep dive into game mechanics:
-- **Core loop**: Hire → Accept → Assign → Deliver → Get paid → Expand
-- **Rider stats**: Speed, reliability, city knowledge, stamina (1-10 scale)
-- **Economy formulas**: Revenue = base + distance × rate × urgency multiplier
-- **Zone archetypes**: Dense metro, suburban, university town, tourist city, industrial
-- **Event system**: Rainstorms, festivals, strikes, viral reviews
-- **Cooperative voting**: Pay structure, work hours, equipment budget
-- **Progression**: Level-based unlocks, milestones, prestige (future)
-- **Hacking stage details**: What each stage teaches, what's new, what skills are needed
+### 1. Core Requirements — *What are we building?*
 
-### 3. Business Plan (`business-plan/requirements.md`)
+The main spec defines the product: a delivery tycoon game with a hidden API hacking layer. It covers:
 
-Even a side project benefits from a plan:
-- **Target audience**: r/incremental_games, r/tycoon, dev/hacker community
-- **Growth strategy**: Reddit posts → community feedback → iterate
-- **Monetization**: Free → donations → premium ($3-5 on Steam)
-- **Competitive landscape**: No game combines tycoon + API hacking
-- **Risk mitigation**: MVP in 2 weekends, publish immediately, iterate on feedback
+- **Two audiences** — casual players who click to play, and hackers who reverse-engineer the API
+- **Game features** — riders, orders, economy, zones, events, cooperative mechanics
+- **Hacking stages** — 8 progressive security challenges (5 implemented so far)
+- **Implementation phases** — a roadmap from MVP to community features
+- **Non-functional requirements** — serverless, fast, free to host
 
-## How Specs Drive Development
+### 2. Game Design — *How does the game work?*
 
-Each phase has a checklist in the requirements. The AI agent references these specs before implementing any feature, ensuring alignment with the original vision.
+A deep dive into mechanics: the core loop (hire → assign → deliver → earn → expand), rider stats, economy formulas, zone types, event system, cooperative voting. This document ensures the game is fun and balanced, not just technically functional.
 
-When the human says "let's do Phase 2", the agent reads the spec, proposes a plan, and implements each item — checking off the list as features are completed.
+### 3. Business Plan — *Why build this?*
 
-The specs are **living documents** — updated after each phase with completion status and dates.
+Even a side project benefits from a plan. Target audience (Reddit gaming communities, developer/hacker community), growth strategy (post on Reddit, iterate on feedback), monetization path (free → donations → premium). The key insight: **no game combines tycoon + API hacking**. That's the gap.
+
+## Why specs matter for AI-assisted development
+
+Traditional development: specs are written, then developers interpret them (sometimes loosely).
+
+AI-assisted development: specs are the **contract**. The AI reads them literally. If the spec says "8 hacking stages", the AI will build 8 stages. If it says "HMAC-SHA256 with key in frontend JS", that's exactly what gets implemented.
+
+This makes specs more important, not less. Ambiguity in specs = ambiguity in code.
+
+## Living documents
+
+The specs aren't frozen. After each phase, they're updated with completion status and dates. When a decision changes (e.g., "defer WebSocket stages until infra supports it"), the spec is updated and the AI adapts.
+
+---
+
+## Technical Details
+
+All specs live in `.kiro/specs/` — a convention for AI-readable project context:
+
+```
+.kiro/
+├── specs/
+│   ├── v1/requirements.md          # Core requirements
+│   ├── game-design/requirements.md # Game mechanics
+│   └── business-plan/requirements.md # Business plan
+└── steering/
+    ├── code-style.md               # Coding conventions
+    ├── testing.md                  # Testing strategy
+    ├── architecture.md             # System diagrams
+    └── interaction.md              # How human ↔ AI communicate
+```
+
+The `steering/` directory contains guidelines for *how* to build (code style, testing rules, architecture patterns). The `specs/` directory contains *what* to build.
+
+When the human says "let's do Phase 2", the AI reads the Phase 2 checklist from `v1/requirements.md`, proposes a plan, and implements each item — checking off the list as features are completed.

@@ -41,4 +41,9 @@
       </div>
     {/each}
   </div>
+
+  <div class="mt-12 w-full max-w-3xl">
+    <p class="text-center text-sm text-muted-foreground mb-3">See it in action</p>
+    <img src="/demo.gif" alt="drop-coop gameplay demo showing registration, hiring riders, assigning orders, and navigating the dashboard" class="rounded-lg border shadow-lg w-full" />
+  </div>
 </div>
