@@ -148,7 +148,11 @@ npm run test:coverage # Coverage report
   - [x] Stage 4: Obfuscated endpoints (hashed paths, 2x rate limit)
   - [x] Stage 5: Rate limiting + pipeline super-batch + anti-bot timing guard
   - [x] Official solution bots for stages 1-5
-- [ ] **Phase 3**: Achievements, API-only features, polish
+- [x] **Phase 3**: Achievements, API-only features, polish
+  - [x] Achievements system (22 badges, auto-check on tick, dashboard page)
+  - [x] API-only features (rider history, treasury breakdown, game snapshot)
+  - [x] Onboarding checklist (Getting Started card, achievement-based)
+  - [x] Achievement notifications (toast on unlock)
 - [ ] **Phase 4**: Community features, mobile PWA
 - [ ] **Future**: Stages 6-8 (WebSocket, protobuf, gauntlet) — deferred until infra supports it
 

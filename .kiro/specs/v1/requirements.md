@@ -219,10 +219,11 @@ Stages are additive — each one builds on the previous. The challenge is not ju
 - [x] Stage 5: Rate limiting + pipeline super-batch + anti-bot timing guard
 - [x] Official solution bots for stages 1-5
 
-### Phase 3 — Polish (month 5-6)
-- [ ] Achievements system
-- [ ] API-only features (no UI)
-- [ ] Polish: better UI, tutorial, onboarding
+### Phase 3 — Polish (month 5-6) ✅
+- [x] Achievements system (22 badges, auto-check on tick, dashboard page)
+- [x] API-only features (rider history, treasury breakdown, game snapshot)
+- [x] Onboarding checklist (Getting Started card, achievement-based)
+- [x] Achievement notifications (toast on unlock)
 
 ### Phase 4 — Community (month 6+)
 - [ ] Documentation site
@@ -242,5 +243,5 @@ Stages are additive — each one builds on the previous. The challenge is not ju
 *Tagline: "Your delivery co-op, your rules."*
 *GitHub: Zweer/drop-coop*
 *Decision made: 2026-03-14*
-*Status: Phase 0 complete, Phase 1 complete, Phase 2 complete*
+*Status: Phase 0 complete, Phase 1 complete, Phase 2 complete, Phase 3 complete*
 *Last updated: 2026-03-17*
