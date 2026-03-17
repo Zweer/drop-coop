@@ -57,6 +57,13 @@
       "when": 1773661697124,
       "tag": "0007_panoramic_mindworm",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1773734144029,
+      "tag": "0008_nosy_riptide",
+      "breakpoints": true
     }
   ]
 }

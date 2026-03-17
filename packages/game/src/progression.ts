@@ -28,7 +28,9 @@ export const MILESTONES: Milestone[] = [
   { level: 8, name: 'Expanding', description: 'Second zone available' },
   { level: 10, name: 'Veteran', description: 'Better order quality' },
   { level: 15, name: 'City Boss', description: 'Third zone available' },
-  { level: 20, name: 'Mogul', description: 'New city unlocked' },
+  { level: 20, name: 'Mogul', description: 'Bologna unlocked' },
+  { level: 30, name: 'Tourist', description: 'Firenze unlocked' },
+  { level: 40, name: 'Industrialist', description: 'Torino unlocked' },
   { level: 50, name: 'Automator', description: 'API tab unlocked — time to automate?' },
 ];
 

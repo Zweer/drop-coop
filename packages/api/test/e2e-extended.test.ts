@@ -1,7 +1,13 @@
 import { eq } from 'drizzle-orm';
 import { afterAll, describe, expect, it, vi } from 'vitest';
 
-import { createClient, hmacSign, registerPlayer, type TestDb } from './e2e-helpers.ts';
+import {
+  createClient,
+  flattenZones,
+  hmacSign,
+  registerPlayer,
+  type TestDb,
+} from './e2e-helpers.ts';
 
 let testDb: TestDb;
 let closeDb: () => Promise<void>;
@@ -750,7 +756,8 @@ describe('Analytics: rider efficiency with history', () => {
 
     // Get a zone ID for the order
     const zonesRes = await client.get('/api/zones');
-    const zones = (await zonesRes.json()) as Record<string, unknown>[];
+    const cities = (await zonesRes.json()) as { zones: Record<string, unknown>[] }[];
+    const zones = flattenZones(cities);
     const centro = zones.find((z) => z.slug === 'centro');
 
     // Insert delivered + failed orders with zoneId

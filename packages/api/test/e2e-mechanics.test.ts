@@ -1,7 +1,13 @@
 import { eq } from 'drizzle-orm';
 import { afterAll, describe, expect, it, vi } from 'vitest';
 
-import { createClient, registerPlayer, TEST_ORDER_DEFAULTS, type TestDb } from './e2e-helpers.ts';
+import {
+  createClient,
+  flattenZones,
+  registerPlayer,
+  TEST_ORDER_DEFAULTS,
+  type TestDb,
+} from './e2e-helpers.ts';
 
 let testDb: TestDb;
 let closeDb: () => Promise<void>;
@@ -420,7 +426,8 @@ describe('E2E: Game mechanics', () => {
     it('should return active events with metadata', async () => {
       // Insert a test event
       const zonesRes = await client.get('/api/zones');
-      const zoneList = (await zonesRes.json()) as Record<string, unknown>[];
+      const cities = (await zonesRes.json()) as { zones: Record<string, unknown>[] }[];
+      const zoneList = flattenZones(cities);
       const centro = zoneList.find((z) => z.slug === 'centro');
 
       await testDb.insert(events).values({

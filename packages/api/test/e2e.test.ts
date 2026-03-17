@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { afterAll, describe, expect, it, vi } from 'vitest';
 
-import { createClient, registerPlayer, type TestDb } from './e2e-helpers.ts';
+import { createClient, flattenZones, registerPlayer, type TestDb } from './e2e-helpers.ts';
 
 let testDb: TestDb;
 let closeDb: () => Promise<void>;
@@ -75,7 +75,8 @@ describe('E2E: Full game loop', () => {
 
   it('should list zones with centro auto-unlocked', async () => {
     const res = await client.get('/api/zones');
-    const zones = (await res.json()) as Record<string, unknown>[];
+    const cities = (await res.json()) as { zones: Record<string, unknown>[] }[];
+    const zones = flattenZones(cities);
     expect(zones.length).toBeGreaterThanOrEqual(5);
 
     const centro = zones.find((z) => z.slug === 'centro');
@@ -90,7 +91,8 @@ describe('E2E: Full game loop', () => {
     await testDb.update(players).set({ level: 5, money: 1000 }).where(eq(players.id, playerId));
 
     const zonesRes = await client.get('/api/zones');
-    const zones = (await zonesRes.json()) as Record<string, unknown>[];
+    const cities = (await zonesRes.json()) as { zones: Record<string, unknown>[] }[];
+    const zones = flattenZones(cities);
     const navigli = zones.find((z) => z.slug === 'navigli');
 
     const res = await client.post('/api/zones/unlock', { zoneId: navigli?.id });
@@ -102,7 +104,8 @@ describe('E2E: Full game loop', () => {
 
   it('should reject unlocking already unlocked zone', async () => {
     const zonesRes = await client.get('/api/zones');
-    const zones = (await zonesRes.json()) as Record<string, unknown>[];
+    const cities = (await zonesRes.json()) as { zones: Record<string, unknown>[] }[];
+    const zones = flattenZones(cities);
     const navigli = zones.find((z) => z.slug === 'navigli');
 
     const res = await client.post('/api/zones/unlock', { zoneId: navigli?.id });

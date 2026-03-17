@@ -1,5 +1,6 @@
 import type { EventType, GameEvent, Order, OrderUrgency, Player, Rider } from '@drop-coop/game';
 import {
+  CITIES,
   getEventDefinition,
   mergeEventEffects,
   processTick,
@@ -17,7 +18,7 @@ const URGENCIES: OrderUrgency[] = ['normal', 'normal', 'normal', 'urgent', 'expr
 function generateOrders(
   playerId: string,
   count: number,
-  unlockedZones: { id: string; slug: string }[],
+  unlockedZones: { id: string; slug: string; city: string }[],
   rewardMultiplier: number,
 ) {
   const now = new Date();
@@ -25,6 +26,11 @@ function generateOrders(
     const zone = unlockedZones[Math.floor(Math.random() * unlockedZones.length)];
     const zoneDef = ZONES.find((z) => z.slug === zone.slug);
     const [minDist, maxDist] = zoneDef?.distanceRange ?? [1, 9];
+
+    const cityDef = CITIES.find((c) => c.slug === zone.city);
+    const baseLat = cityDef?.baseLat ?? 45.464;
+    const baseLng = cityDef?.baseLng ?? 9.19;
+    const spread = cityDef?.coordSpread ?? 0.04;
 
     const distance = Math.round((minDist + Math.random() * (maxDist - minDist)) * 10) / 10;
     const urgency = URGENCIES[Math.floor(Math.random() * URGENCIES.length)];
@@ -35,10 +41,10 @@ function generateOrders(
     return {
       playerId,
       zoneId: zone.id,
-      pickupLat: 45.46 + Math.random() * 0.04,
-      pickupLng: 9.17 + Math.random() * 0.04,
-      dropoffLat: 45.46 + Math.random() * 0.04,
-      dropoffLng: 9.17 + Math.random() * 0.04,
+      pickupLat: baseLat + Math.random() * spread,
+      pickupLng: baseLng + Math.random() * spread,
+      dropoffLat: baseLat + Math.random() * spread,
+      dropoffLng: baseLng + Math.random() * spread,
       distance,
       urgency,
       reward,

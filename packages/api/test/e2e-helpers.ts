@@ -87,6 +87,13 @@ export const TEST_ORDER_DEFAULTS = {
   dropoffLng: 9.195,
 };
 
+/** Extract flat zone list from city-grouped /api/zones response. */
+export function flattenZones(
+  cities: { zones: Record<string, unknown>[] }[],
+): Record<string, unknown>[] {
+  return cities.flatMap((c) => c.zones);
+}
+
 export function createClient(
   // biome-ignore lint/complexity/noBannedTypes: Hono app type is complex
   app: { request: Function },

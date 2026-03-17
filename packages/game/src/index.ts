@@ -43,5 +43,5 @@ export type {
   TickModifiers,
   Zone,
 } from './types.js';
-export type { ZoneDefinition } from './zones.js';
-export { ZONES } from './zones.js';
+export type { CityDefinition, ZoneDefinition } from './zones.js';
+export { CITIES, ZONES } from './zones.js';

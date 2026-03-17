@@ -1,4 +1,4 @@
-import { ZONES } from '@drop-coop/game';
+import { CITIES, ZONES } from '@drop-coop/game';
 import { and, eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { z } from 'zod';
@@ -21,6 +21,7 @@ async function ensureZones() {
       missing.map((z) => ({
         slug: z.slug,
         name: z.name,
+        city: z.city,
         demandLevel: z.demandLevel,
         trafficDensity: z.trafficDensity,
         unlockCost: z.unlockCost,
@@ -64,12 +65,35 @@ zonesRoute.get('/', async (c) => {
   });
   const unlockedIds = new Set(unlocked.map((pz) => pz.zoneId));
 
-  return c.json(
-    allZones.map((z) => ({
-      ...z,
-      unlocked: unlockedIds.has(z.id),
-    })),
-  );
+  const player = await db.query.players.findFirst({ where: eq(players.id, playerId) });
+  const playerLevel = player?.level ?? 1;
+
+  const zoneList = allZones.map((z) => ({
+    ...z,
+    unlocked: unlockedIds.has(z.id),
+  }));
+
+  // Group by city, only show cities the player can see (level within 10 of requirement)
+  const cityMap = new Map<string, typeof zoneList>();
+  for (const z of zoneList) {
+    const city = z.city ?? 'milan';
+    const list = cityMap.get(city);
+    if (list) list.push(z);
+    else cityMap.set(city, [z]);
+  }
+
+  const cities = CITIES.filter(
+    (city) => playerLevel >= city.requiredLevel || playerLevel >= city.requiredLevel - 10,
+  ).map((city) => ({
+    slug: city.slug,
+    name: city.name,
+    archetype: city.archetype,
+    requiredLevel: city.requiredLevel,
+    unlocked: playerLevel >= city.requiredLevel,
+    zones: cityMap.get(city.slug) ?? [],
+  }));
+
+  return c.json(cities);
 });
 
 zonesRoute.post('/unlock', async (c) => {
@@ -85,6 +109,14 @@ zonesRoute.post('/unlock', async (c) => {
   const player = await db.query.players.findFirst({ where: eq(players.id, playerId) });
   /* c8 ignore next */
   if (!player) return c.json({ error: 'Player not found' }, 404);
+
+  // Check city-level access
+  const cityDef = CITIES.find((city) => city.slug === zone.city);
+  if (cityDef && player.level < cityDef.requiredLevel)
+    return c.json(
+      { error: `Requires level ${cityDef.requiredLevel} to access ${cityDef.name}` },
+      403,
+    );
 
   if (player.level < zone.requiredLevel)
     return c.json({ error: `Requires level ${zone.requiredLevel}` }, 403);

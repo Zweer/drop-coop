@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { afterAll, describe, expect, it, vi } from 'vitest';
 
-import { createClient, registerPlayer, type TestDb } from './e2e-helpers.ts';
+import { createClient, flattenZones, registerPlayer, type TestDb } from './e2e-helpers.ts';
 
 let testDb: TestDb;
 let closeDb: () => Promise<void>;
@@ -199,7 +199,8 @@ describe('Zone edge cases', () => {
     await testDb.update(players).set({ level: 1, money: 9999 }).where(eq(players.id, playerId));
 
     const zonesRes = await client.get('/api/zones');
-    const zones = (await zonesRes.json()) as Record<string, unknown>[];
+    const cities = (await zonesRes.json()) as { zones: Record<string, unknown>[] }[];
+    const zones = flattenZones(cities);
     const navigli = zones.find((z) => z.slug === 'navigli');
 
     const res = await client.post('/api/zones/unlock', { zoneId: navigli?.id });
@@ -210,7 +211,8 @@ describe('Zone edge cases', () => {
     await testDb.update(players).set({ level: 10, money: 1 }).where(eq(players.id, playerId));
 
     const zonesRes = await client.get('/api/zones');
-    const zones = (await zonesRes.json()) as Record<string, unknown>[];
+    const cities = (await zonesRes.json()) as { zones: Record<string, unknown>[] }[];
+    const zones = flattenZones(cities);
     const navigli = zones.find((z) => z.slug === 'navigli');
 
     const res = await client.post('/api/zones/unlock', { zoneId: navigli?.id });

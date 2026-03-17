@@ -155,8 +155,9 @@ test('orders page shows need riders message when no riders', async ({ page }) =>
 test('zones page shows Centro as active', async ({ page }) => {
   await register(page);
   await page.getByRole('link', { name: 'Zones' }).first().click();
+  await expect(page.getByText('Cities & Zones')).toBeVisible();
   await expect(page.getByText('Centro')).toBeVisible();
-  await expect(page.getByText('Active', { exact: false })).toBeVisible();
+  await expect(page.getByText('✅ Active').first()).toBeVisible();
 });
 
 test('zones page shows locked zones', async ({ page }) => {

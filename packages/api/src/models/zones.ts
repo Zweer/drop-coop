@@ -6,6 +6,7 @@ export const zones = pgTable('zones', {
   id: uuid('id').primaryKey().defaultRandom(),
   slug: text('slug').notNull().unique(),
   name: text('name').notNull(),
+  city: text('city').notNull().default('milan'),
   demandLevel: integer('demand_level').notNull(),
   trafficDensity: integer('traffic_density').notNull(),
   unlockCost: real('unlock_cost').notNull(),
