@@ -1,3 +1,17 @@
+export type {
+  EquipmentBudget,
+  PayStructure,
+  PolicyDefinition,
+  PolicyOption,
+  PolicyType,
+  WorkHours,
+} from './coop.js';
+export {
+  MIN_RIDERS_FOR_VOTE,
+  mergePolicyEffects,
+  POLICIES,
+  simulateVote,
+} from './coop.js';
 export type { UpgradeableStat } from './economy.js';
 export {
   calculateDeliveryMinutes,

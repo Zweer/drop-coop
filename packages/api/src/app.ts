@@ -9,6 +9,7 @@ import analyticsRoute from './routes/analytics.ts';
 import auth from './routes/auth.ts';
 import batchRoute from './routes/batch.ts';
 import contractsRoute from './routes/contracts.ts';
+import coopRoute from './routes/coop.ts';
 import eventsRoute from './routes/events.ts';
 import leaderboardRoute from './routes/leaderboard.ts';
 import marketRoute from './routes/market.ts';
@@ -63,6 +64,7 @@ app.route('/api/riders', ridersRoute);
 app.route('/api/orders', ordersRoute);
 app.route('/api/zones', zonesRoute);
 app.route('/api/events', eventsRoute);
+app.route('/api/coop', coopRoute);
 app.route('/api/leaderboard', leaderboardRoute);
 
 // Stage 2: HMAC-protected bulk endpoints

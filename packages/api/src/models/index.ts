@@ -1,4 +1,5 @@
 export * from './auth-accounts.ts';
+export * from './coop-policies.ts';
 export * from './discovered-endpoints.ts';
 export * from './events.ts';
 export * from './orders.ts';

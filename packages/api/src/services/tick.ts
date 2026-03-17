@@ -3,6 +3,7 @@ import {
   CITIES,
   getEventDefinition,
   mergeEventEffects,
+  mergePolicyEffects,
   processTick,
   rollNewEvents,
   ZONES,
@@ -10,7 +11,15 @@ import {
 import { and, eq, gt, inArray } from 'drizzle-orm';
 
 import { db } from '../db/index.ts';
-import { events, orders, players, playerZones, riders, zones } from '../models/index.ts';
+import {
+  coopPolicies,
+  events,
+  orders,
+  players,
+  playerZones,
+  riders,
+  zones,
+} from '../models/index.ts';
 
 const URGENCIES: OrderUrgency[] = ['normal', 'normal', 'normal', 'urgent', 'express'];
 
@@ -86,7 +95,23 @@ export async function runTick(playerId: string): Promise<{
   });
 
   const activeEventTypes = activeEvents.map((e) => e.type) as EventType[];
-  const modifiers = mergeEventEffects(activeEventTypes);
+  const eventMods = mergeEventEffects(activeEventTypes);
+
+  // Load coop policies and merge effects
+  const activePolicies = await db.query.coopPolicies.findMany({
+    where: eq(coopPolicies.playerId, playerId),
+  });
+  const policyMods = mergePolicyEffects(
+    activePolicies.map((p) => ({ type: p.policyType, option: p.option }) as never),
+  );
+
+  // Combine event + policy modifiers
+  const modifiers = {
+    speedMultiplier: eventMods.speedMultiplier * policyMods.speedMultiplier,
+    rewardMultiplier: eventMods.rewardMultiplier * policyMods.rewardMultiplier,
+    orderRateMultiplier: eventMods.orderRateMultiplier * policyMods.orderRateMultiplier,
+    upgradeCostMultiplier: eventMods.upgradeCostMultiplier * policyMods.upgradeCostMultiplier,
+  };
 
   /* c8 ignore start -- pure data mapping */
   const toGamePlayer = (p: typeof player): Player => ({
