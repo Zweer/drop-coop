@@ -31,6 +31,7 @@
   "scripts": {
     "build": "npm run build -w packages/game",
     "clean": "rimraf packages/game/dist",
+    "demo": "npx playwright test --config playwright.demo.config.ts",
     "predev": "npm run build",
     "dev": "concurrently -n api,web -c blue,green 'npm run dev -w packages/api' 'npm run dev -w packages/web'",
     "dev:api": "npm run dev -w packages/api",
