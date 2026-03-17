@@ -148,8 +148,9 @@ npm run test:coverage # Coverage report
   - [x] Stage 4: Obfuscated endpoints (hashed paths, 2x rate limit)
   - [x] Stage 5: Rate limiting + pipeline super-batch + anti-bot timing guard
   - [x] Official solution bots for stages 1-5
-- [ ] **Phase 3**: WebSocket, protobuf, stages 6-8
+- [ ] **Phase 3**: Achievements, API-only features, polish
 - [ ] **Phase 4**: Community features, mobile PWA
+- [ ] **Future**: Stages 6-8 (WebSocket, protobuf, gauntlet) — deferred until infra supports it
 
 ## Contributing
 

@@ -219,13 +219,10 @@ Stages are additive — each one builds on the previous. The challenge is not ju
 - [x] Stage 5: Rate limiting + pipeline super-batch + anti-bot timing guard
 - [x] Official solution bots for stages 1-5
 
-### Phase 3 — Advanced (month 5-6)
-- [ ] Stage 6: WebSocket protocol
-- [ ] Stage 7: Protobuf
-- [ ] Stage 8: The Gauntlet
+### Phase 3 — Polish (month 5-6)
 - [ ] Achievements system
 - [ ] API-only features (no UI)
-- [ ] Polish: better UI, sound, tutorial
+- [ ] Polish: better UI, tutorial, onboarding
 
 ### Phase 4 — Community (month 6+)
 - [ ] Documentation site
@@ -233,6 +230,11 @@ Stages are additive — each one builds on the previous. The challenge is not ju
 - [ ] Seasonal leaderboard resets
 - [ ] Mobile PWA
 - [ ] Mod support (custom cities/events)
+
+### Future — Advanced Stages (when infra supports it)
+- [ ] Stage 6: WebSocket protocol
+- [ ] Stage 7: Protobuf
+- [ ] Stage 8: The Gauntlet
 
 ---
 
