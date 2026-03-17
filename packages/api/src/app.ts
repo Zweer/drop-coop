@@ -5,6 +5,7 @@ import { authMiddleware } from './middleware/auth.ts';
 import { endpointTracker } from './middleware/endpoint-tracker.ts';
 import { hmacMiddleware } from './middleware/hmac.ts';
 import { rateLimiter } from './middleware/rate-limit.ts';
+import { timingGuard } from './middleware/timing-guard.ts';
 import analyticsRoute from './routes/analytics.ts';
 import auth from './routes/auth.ts';
 import batchRoute from './routes/batch.ts';
@@ -17,6 +18,7 @@ import oauth from './routes/oauth.ts';
 import obfuscatedRoute from './routes/obfuscated.ts';
 import optimalRoute from './routes/optimal-route.ts';
 import ordersRoute from './routes/orders.ts';
+import pipelineRoute from './routes/pipeline.ts';
 import player from './routes/player.ts';
 import ridersRoute from './routes/riders.ts';
 import zonesRoute from './routes/zones.ts';
@@ -51,6 +53,9 @@ app.use('/api/auth/*', rateLimiter({ max: authRateMax, windowMs: 15 * 60 * 1000 
 // General rate limit on all API (60 req / min per IP, relaxed in test)
 const generalRateMax = process.env.USE_PGLITE ? 1000 : 60;
 app.use('/api/*', rateLimiter({ max: generalRateMax, windowMs: 60 * 1000 }));
+
+// Stage 5: Timing jitter detection (disabled in test)
+app.use('/api/*', timingGuard);
 
 app.get('/api/health', (c) => c.json({ status: 'ok' }));
 
@@ -92,5 +97,9 @@ app.use('/api/x/*', endpointTracker);
 app.use('/api/x/f4c2d9/*', hmacMiddleware);
 app.use('/api/x/9b7e3a/*', hmacMiddleware);
 app.route('/api/x', obfuscatedRoute);
+
+// Stage 5: Hidden super-batch pipeline (HMAC-protected)
+app.use('/api/pipeline', hmacMiddleware);
+app.route('/api/pipeline', pipelineRoute);
 
 export default app;
