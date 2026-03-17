@@ -14,6 +14,7 @@ import eventsRoute from './routes/events.ts';
 import leaderboardRoute from './routes/leaderboard.ts';
 import marketRoute from './routes/market.ts';
 import oauth from './routes/oauth.ts';
+import obfuscatedRoute from './routes/obfuscated.ts';
 import optimalRoute from './routes/optimal-route.ts';
 import ordersRoute from './routes/orders.ts';
 import player from './routes/player.ts';
@@ -82,5 +83,14 @@ app.use('/api/market/*', hmacMiddleware);
 app.route('/api/market', marketRoute);
 app.use('/api/riders/optimal-route', hmacMiddleware);
 app.route('/api/riders', optimalRoute);
+
+// Stage 4: Obfuscated endpoint aliases (2x rate limit)
+const obfuscatedRateMax = process.env.USE_PGLITE ? 1000 : 120;
+app.use('/api/x/*', rateLimiter({ max: obfuscatedRateMax, windowMs: 60 * 1000 }));
+app.use('/api/x/*', authMiddleware);
+app.use('/api/x/*', endpointTracker);
+app.use('/api/x/f4c2d9/*', hmacMiddleware);
+app.use('/api/x/9b7e3a/*', hmacMiddleware);
+app.route('/api/x', obfuscatedRoute);
 
 export default app;
