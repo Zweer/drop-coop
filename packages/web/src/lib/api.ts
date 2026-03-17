@@ -154,6 +154,15 @@ export const api = {
       request<{ riderId: string; status: string }>(`/riders/${riderId}/rest`, {
         method: 'POST',
       }),
+    history: (riderId: string) =>
+      request<{
+        riderId: string;
+        totalDelivered: number;
+        totalFailed: number;
+        successRate: number;
+        totalRevenue: number;
+        byZone: Record<string, { delivered: number; failed: number; revenue: number }>;
+      }>(`/riders/${riderId}/history`),
   },
   orders: {
     list: () => request<Record<string, unknown>[]>('/orders'),

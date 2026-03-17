@@ -7,12 +7,12 @@ import {
   POOL_REFRESH_MS,
   poolSeed,
 } from '@drop-coop/game';
-import { and, eq, gt } from 'drizzle-orm';
+import { and, eq, gt, inArray } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { z } from 'zod';
 
 import { db } from '../db/index.ts';
-import { events, players, riderPool, riders } from '../models/index.ts';
+import { events, orders, players, riderPool, riders } from '../models/index.ts';
 import type { AppEnv } from '../types.ts';
 
 /** Ensure player has a valid pool. Returns current pool entries. */
@@ -147,6 +147,46 @@ ridersRoute.post('/:id/upgrade', async (c) => {
     .where(eq(riders.id, riderId));
 
   return c.json({ riderId, stat, oldValue: currentValue, newValue: currentValue + 1, cost });
+});
+
+ridersRoute.get('/:id/history', async (c) => {
+  const playerId = c.get('playerId');
+  const riderId = c.req.param('id');
+
+  const rider = await db.query.riders.findFirst({
+    where: and(eq(riders.id, riderId), eq(riders.playerId, playerId)),
+  });
+  if (!rider) return c.json({ error: 'Rider not found' }, 404);
+
+  const deliveries = await db.query.orders.findMany({
+    where: and(eq(orders.riderId, riderId), inArray(orders.status, ['delivered', 'failed'])),
+  });
+
+  const delivered = deliveries.filter((o) => o.status === 'delivered');
+  const failed = deliveries.filter((o) => o.status === 'failed');
+
+  // Stats per zone
+  const byZone: Record<string, { delivered: number; failed: number; revenue: number }> = {};
+  for (const o of deliveries) {
+    const zid = o.zoneId ?? 'unknown';
+    if (!byZone[zid]) byZone[zid] = { delivered: 0, failed: 0, revenue: 0 };
+    const z = byZone[zid];
+    if (o.status === 'delivered') {
+      z.delivered++;
+      z.revenue += o.reward;
+    } else {
+      z.failed++;
+    }
+  }
+
+  return c.json({
+    riderId,
+    totalDelivered: delivered.length,
+    totalFailed: failed.length,
+    successRate: deliveries.length > 0 ? delivered.length / deliveries.length : 0,
+    totalRevenue: delivered.reduce((s, o) => s + o.reward, 0),
+    byZone,
+  });
 });
 
 ridersRoute.post('/:id/rest', async (c) => {

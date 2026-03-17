@@ -84,6 +84,22 @@
 
   let canUpgrade = $derived(Number(getProfile()?.level) >= 5)
 
+  type RiderHistory = {
+    totalDelivered: number
+    totalFailed: number
+    successRate: number
+    totalRevenue: number
+  }
+  let historyCache: Record<string, RiderHistory> = $state({})
+  let historyOpen: Record<string, boolean> = $state({})
+
+  async function toggleHistory(riderId: string) {
+    historyOpen[riderId] = !historyOpen[riderId]
+    if (historyOpen[riderId] && !historyCache[riderId]) {
+      historyCache[riderId] = await api.riders.history(riderId)
+    }
+  }
+
   const stats = [
     { key: 'speed', icon: '⚡', label: 'Speed' },
     { key: 'reliability', icon: '🎯', label: 'Reliability' },
@@ -206,6 +222,20 @@
             </div>
 
             <p class="text-xs text-muted-foreground">💰 Salary: €{rider.salary}/hr</p>
+
+            <button
+              class="text-xs text-primary hover:underline"
+              onclick={() => toggleHistory(rider.id as string)}
+            >
+              {historyOpen[rider.id as string] ? '▾ Hide history' : '▸ Show history'}
+            </button>
+            {#if historyOpen[rider.id as string] && historyCache[rider.id as string]}
+              {@const h = historyCache[rider.id as string]}
+              <div class="text-xs text-muted-foreground space-y-0.5 pl-2 border-l-2">
+                <p>📦 {h.totalDelivered} delivered, {h.totalFailed} failed ({(h.successRate * 100).toFixed(0)}%)</p>
+                <p>💰 €{h.totalRevenue.toFixed(0)} total revenue</p>
+              </div>
+            {/if}
           </CardContent>
         </Card>
       {/each}

@@ -22,6 +22,8 @@ import ordersRoute from './routes/orders.ts';
 import pipelineRoute from './routes/pipeline.ts';
 import player from './routes/player.ts';
 import ridersRoute from './routes/riders.ts';
+import snapshotRoute from './routes/snapshot.ts';
+import treasuryRoute from './routes/treasury.ts';
 import zonesRoute from './routes/zones.ts';
 
 export const app = new Hono();
@@ -74,6 +76,8 @@ app.route('/api/events', eventsRoute);
 app.route('/api/coop', coopRoute);
 app.route('/api/leaderboard', leaderboardRoute);
 app.route('/api/achievements', achievementsRoute);
+app.route('/api/treasury', treasuryRoute);
+app.route('/api/snapshot', snapshotRoute);
 
 // Stage 2: HMAC-protected bulk endpoints
 app.use('/api/batch/*', hmacMiddleware);
