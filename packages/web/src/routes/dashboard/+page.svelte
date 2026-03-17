@@ -21,6 +21,17 @@
   let prevEventIds = new Set<string>()
   let prevTotalDeliveries = -1
 
+  // Onboarding checklist (based on achievements)
+  let achievements: { id: string; unlocked: boolean }[] = $state([])
+  let onboardingLoaded = $state(false)
+
+  const onboardingSteps = [
+    { achievementId: 'first_hire', label: 'Hire your first rider', icon: '🏍️', href: '/dashboard/riders' },
+    { achievementId: 'first_delivery', label: 'Complete a delivery', icon: '📦', href: '/dashboard/orders' },
+    { achievementId: 'second_zone', label: 'Unlock a second zone', icon: '🗺️', href: '/dashboard/zones' },
+    { achievementId: 'api_explorer', label: 'Discover the API 😏', icon: '🔍', href: '/dashboard', hint: 'Try pressing F12...' },
+  ]
+
   const clock = useTick()
 
   async function refresh() {
@@ -45,6 +56,15 @@
         const newTotal = Number(p.totalDeliveries)
         if (prevTotalDeliveries === 0 && newTotal > 0) {
           toast.success('🎉 First delivery completed!', { description: 'Your co-op is up and running. Keep going!' })
+        }
+
+        // Achievement toasts
+        const newAch = (p.newAchievements ?? []) as { id: string; name: string; icon: string }[]
+        for (const a of newAch) {
+          toast.success(`${a.icon} Achievement unlocked!`, { description: a.name })
+          // Update local cache
+          const cached = achievements.find((c) => c.id === a.id)
+          if (cached) cached.unlocked = true
         }
 
         for (const order of all) {
@@ -80,6 +100,10 @@
 
   onMount(async () => {
     await refresh()
+    try {
+      achievements = await api.achievements.list()
+      onboardingLoaded = true
+    } catch { /* ignore */ }
     loading = false
   })
 
@@ -96,6 +120,11 @@
   let lastTick = $derived(getProfile()?.lastTick as Record<string, unknown> | undefined)
 
   let isNewPlayer = $derived(Number(getProfile()?.totalDeliveries) === 0)
+
+  let onboardingComplete = $derived(
+    onboardingLoaded && onboardingSteps.every((s) => achievements.find((a) => a.id === s.achievementId)?.unlocked)
+  )
+  let onboardingVisible = $derived(onboardingLoaded && !onboardingComplete)
 
   let nextStep = $derived.by(() => {
     if (riders.length === 0) return { text: 'Hire your first rider to start delivering!', action: '/dashboard/riders', label: 'Hire a rider', icon: '🏍️', step: isNewPlayer ? '1/3' : null }
@@ -163,6 +192,30 @@
             {/each}
           </div>
         {/if}
+      </CardContent>
+    </Card>
+  {/if}
+
+  <!-- Onboarding checklist -->
+  {#if onboardingVisible}
+    <Card class="border-dashed">
+      <CardHeader class="pb-2">
+        <CardTitle class="text-base">🚀 Getting Started</CardTitle>
+      </CardHeader>
+      <CardContent class="space-y-2">
+        {#each onboardingSteps as step}
+          {@const done = achievements.find((a) => a.id === step.achievementId)?.unlocked}
+          <a
+            href={step.href}
+            class="flex items-center gap-3 rounded-md p-2 text-sm transition-colors {done ? 'opacity-50' : 'hover:bg-muted'}"
+          >
+            <span class="text-lg">{done ? '✅' : step.icon}</span>
+            <span class={done ? 'line-through' : ''}>{step.label}</span>
+            {#if !done && step.hint}
+              <span class="text-xs text-muted-foreground ml-auto">{step.hint}</span>
+            {/if}
+          </a>
+        {/each}
       </CardContent>
     </Card>
   {/if}
