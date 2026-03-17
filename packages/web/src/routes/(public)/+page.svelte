@@ -18,7 +18,7 @@
   ]
 </script>
 
-<main class="flex min-h-screen flex-col items-center justify-center px-4">
+<div class="flex min-h-[70vh] flex-col items-center justify-center px-4">
   <div class="text-center space-y-6 max-w-lg">
     <h1 class="text-5xl font-bold">🚲 drop-coop</h1>
     <p class="text-xl text-muted-foreground">Your delivery co-op, your rules.</p>
@@ -41,4 +41,4 @@
       </div>
     {/each}
   </div>
-</main>
+</div>

@@ -30,7 +30,7 @@ async function waitForHydration(page: Page) {
 
 test('landing page shows title and play button', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByText('drop-coop')).toBeVisible();
+  await expect(page.getByRole('heading', { name: /drop-coop/ })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Play now' })).toBeVisible();
 });
 
@@ -104,7 +104,7 @@ test('new player sees stats cards', async ({ page }) => {
 
 test('new player sees hire prompt', async ({ page }) => {
   await register(page);
-  await expect(page.getByText('Hire your first rider')).toBeVisible();
+  await expect(page.getByText('Hire your first rider').first()).toBeVisible();
 });
 
 // --- Riders ---
