@@ -8,9 +8,12 @@ import { rateLimiter } from './middleware/rate-limit.ts';
 import analyticsRoute from './routes/analytics.ts';
 import auth from './routes/auth.ts';
 import batchRoute from './routes/batch.ts';
+import contractsRoute from './routes/contracts.ts';
 import eventsRoute from './routes/events.ts';
 import leaderboardRoute from './routes/leaderboard.ts';
+import marketRoute from './routes/market.ts';
 import oauth from './routes/oauth.ts';
+import optimalRoute from './routes/optimal-route.ts';
 import ordersRoute from './routes/orders.ts';
 import player from './routes/player.ts';
 import ridersRoute from './routes/riders.ts';
@@ -69,5 +72,13 @@ app.route('/api/batch', batchRoute);
 // Stage 3: HMAC-protected analytics
 app.use('/api/analytics/*', hmacMiddleware);
 app.route('/api/analytics', analyticsRoute);
+
+// Hidden HMAC-protected endpoints (not documented)
+app.use('/api/contracts/*', hmacMiddleware);
+app.route('/api/contracts', contractsRoute);
+app.use('/api/market/*', hmacMiddleware);
+app.route('/api/market', marketRoute);
+app.use('/api/riders/optimal-route', hmacMiddleware);
+app.route('/api/riders', optimalRoute);
 
 export default app;
