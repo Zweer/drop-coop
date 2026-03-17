@@ -211,13 +211,13 @@ Stages are additive — each one builds on the previous. The challenge is not ju
 - [x] Stage 3: Analytics endpoints (demand forecast, rider efficiency)
 - [x] Challenge descriptions for stages 1-3
 
-### Phase 2 — Depth (month 3-4)
-- [ ] Cooperative mechanics (voting, profit sharing)
-- [ ] Multiple cities
-- [ ] Stage 4: Obfuscated endpoints
-- [ ] Stage 5: Rate limiting + batch
-- [ ] Hidden endpoints (analytics, contracts)
-- [ ] Official solution bots for stages 1-5
+### Phase 2 — Depth (month 3-4) ✅
+- [x] Multiple cities (Milano, Bologna, Firenze, Torino — 14 zones)
+- [x] Cooperative mechanics (policy voting, profit sharing, tick integration)
+- [x] Hidden endpoints (contracts, optimal-route, market insider)
+- [x] Stage 4: Obfuscated endpoints (hashed paths, 2x rate limit)
+- [x] Stage 5: Rate limiting + pipeline super-batch + anti-bot timing guard
+- [x] Official solution bots for stages 1-5
 
 ### Phase 3 — Advanced (month 5-6)
 - [ ] Stage 6: WebSocket protocol
@@ -240,5 +240,5 @@ Stages are additive — each one builds on the previous. The challenge is not ju
 *Tagline: "Your delivery co-op, your rules."*
 *GitHub: Zweer/drop-coop*
 *Decision made: 2026-03-14*
-*Status: Phase 0 complete, Phase 1 complete*
-*Last updated: 2026-03-15*
+*Status: Phase 0 complete, Phase 1 complete, Phase 2 complete*
+*Last updated: 2026-03-17*

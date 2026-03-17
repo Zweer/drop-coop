@@ -245,5 +245,5 @@ Reset progress for permanent bonuses:
 
 ---
 
-*Status: Core mechanics implemented (engine, economy, progression, zones, upgrades, failure, dynamic pricing, events). Cooperative mechanics pending.*
-*Last updated: 2026-03-15*
+*Status: All Phase 0-2 mechanics implemented (engine, economy, progression, zones, upgrades, failure, dynamic pricing, events, multiple cities, cooperative mechanics, hacking stages 1-5).*
+*Last updated: 2026-03-17*

@@ -141,7 +141,13 @@ npm run test:coverage # Coverage report
   - [x] Stage 2: HMAC-protected bulk endpoints (batch assign, bulk upgrade)
   - [x] Stage 3: Analytics endpoints (demand forecast, rider efficiency)
   - [x] Challenge descriptions for stages 1-3
-- [ ] **Phase 2**: Cities, co-op mechanics, stages 4-5
+- [x] **Phase 2**: Depth — cities, co-op mechanics, stages 4-5
+  - [x] Multiple cities (Milano, Bologna, Firenze, Torino — 14 zones)
+  - [x] Cooperative mechanics (policy voting, profit sharing, tick integration)
+  - [x] Hidden endpoints (contracts, optimal-route, market insider)
+  - [x] Stage 4: Obfuscated endpoints (hashed paths, 2x rate limit)
+  - [x] Stage 5: Rate limiting + pipeline super-batch + anti-bot timing guard
+  - [x] Official solution bots for stages 1-5
 - [ ] **Phase 3**: WebSocket, protobuf, stages 6-8
 - [ ] **Phase 4**: Community features, mobile PWA
 
